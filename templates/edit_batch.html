@@ -1,0 +1,110 @@
+{% extends "base.html" %} {% block title %}Edit Batch - MediStore Pro{% endblock
+%} {% block content %}
+
+<div class="section-spacing">
+  <h1 class="page-title">Edit Batch</h1>
+  <p class="page-subtitle">
+    {{ batch.product_name }} - {{ batch.batch_number }}
+  </p>
+</div>
+
+<div class="card max-w-4xl">
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('edit_batch', batch_id=batch.id) }}">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="form-label">Batch Number *</label>
+          <input
+            type="text"
+            name="batch_number"
+            required
+            value="{{ batch.batch_number }}"
+            class="form-input"
+          />
+        </div>
+
+        <div>
+          <label class="form-label">Quantity *</label>
+          <input
+            type="number"
+            name="quantity"
+            required
+            min="0"
+            value="{{ batch.quantity }}"
+            class="form-input"
+          />
+          <p class="text-sm text-gray-500 mt-1">
+            Current: {{ batch.quantity }} units
+          </p>
+        </div>
+
+        <div>
+          <label class="form-label">Expiry Date</label>
+          <input
+            type="date"
+            name="expiry_date"
+            value="{% if batch.expiry_date %}{{ batch.expiry_date.strftime('%Y-%m-%d') }}{% endif %}"
+            class="form-input"
+          />
+        </div>
+
+        <div>
+          <label class="form-label">Cost Price per Unit (₹)</label>
+          <input
+            type="number"
+            step="0.01"
+            name="cost_price"
+            value="{% if batch.cost_price %}{{ batch.cost_price }}{% endif %}"
+            placeholder="0.00"
+            class="form-input"
+          />
+        </div>
+
+        <div>
+          <label class="form-label">Supplier</label>
+          <select name="supplier_id" id="supplierSelect" class="form-input">
+            <option value="">Select Supplier (optional)</option>
+            {% for supplier in suppliers %}
+            <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label">Shelf Location</label>
+          <input
+            type="text"
+            name="shelf_location"
+            value="{{ batch.shelf_location or '' }}"
+            placeholder="e.g., A1"
+            class="form-input"
+          />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-6">
+        <a
+          href="{{ url_for('view_batches', product_id=batch.product_id) }}"
+          class="btn btn-secondary"
+        >
+          Cancel
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Update Batch
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Set the selected supplier using JavaScript to avoid formatter issues with Jinja2
+  document.addEventListener('DOMContentLoaded', function() {
+    const supplierId = {{ batch.supplier_id if batch.supplier_id else 'null' }};
+    if (supplierId) {
+      document.getElementById('supplierSelect').value = supplierId;
+    }
+  });
+</script>
+
+{% endblock %}

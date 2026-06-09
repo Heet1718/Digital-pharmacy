@@ -1,0 +1,307 @@
+{% extends "base.html" %} {% block title %}Inventory - MediStore Pro{% endblock
+%} {% block content %}
+<div class="flex justify-between items-start section-spacing">
+  <div>
+    <h1 class="page-title">Inventory</h1>
+    <p class="page-subtitle">Manage all products and stock levels</p>
+  </div>
+  
+  <div class="flex gap-2">
+    <a href="{{ url_for('download_inventory_report') }}" 
+       class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md transition-colors shadow-sm">
+      <i class="fas fa-file-pdf mr-2"></i> Download Inventory
+    </a>
+
+    {% if session.get('role') == 'owner' %}
+    <a href="{{ url_for('add_product') }}" class="btn-primary">
+      <i class="fas fa-plus"></i> Add Product
+    </a>
+    <a href="{{ url_for('import_csv_page') }}" class="btn-success">
+      <i class="fas fa-file-csv"></i> Import CSV
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Search Box -->
+<div class="card section-spacing">
+  <div class="card-body">
+    <div class="flex gap-3">
+      <input
+        type="text"
+        id="inventorySearch"
+        placeholder="Search by medicine name, manufacturer, or category..."
+        class="form-input flex-1"
+      />
+      <button onclick="filterInventory()" class="btn-primary">
+        <i class="fas fa-search"></i> Search
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="overflow-x-auto">
+    <table class="w-full data-table" id="inventoryTable">
+      <thead>
+        <tr class="bg-gray-50 border-b border-gray-200">
+          <th
+            class="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+            onclick="sortTable(0)"
+          >
+            <div class="flex items-center gap-2">
+              <span>Medicine Name</span>
+              <i class="fas fa-sort text-gray-400 text-xs"></i>
+            </div>
+          </th>
+          <th
+            class="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+            onclick="sortTable(1)"
+          >
+            <div class="flex items-center gap-2">
+              <span>Manufacturer</span>
+              <i class="fas fa-sort text-gray-400 text-xs"></i>
+            </div>
+          </th>
+          <th
+            class="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+            onclick="sortTable(2)"
+          >
+            <div class="flex items-center gap-2">
+              <span>Category</span>
+              <i class="fas fa-sort text-gray-400 text-xs"></i>
+            </div>
+          </th>
+          <th
+            class="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+            onclick="sortTable(3)"
+          >
+            <div class="flex items-center gap-2">
+              <span>Price</span>
+              <i class="fas fa-sort text-gray-400 text-xs"></i>
+            </div>
+          </th>
+          <th
+            class="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+            onclick="sortTable(4)"
+          >
+            <div class="flex items-center gap-2">
+              <span>Stock</span>
+              <i class="fas fa-sort text-gray-400 text-xs"></i>
+            </div>
+          </th>
+          <th
+            class="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+            onclick="sortTable(5)"
+          >
+            <div class="flex items-center gap-2">
+              <span>Nearest Expiry</span>
+              <i class="fas fa-sort text-gray-400 text-xs"></i>
+            </div>
+          </th>
+          <th class="text-left py-3 px-4 font-semibold text-gray-700">
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody id="inventoryTableBody">
+        {% for product in products %}
+        <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+          <td class="py-3 px-4 font-medium text-gray-900">
+            {{ product.name }}
+          </td>
+          <td class="py-3 px-4 text-gray-600">{{ product.manufacturer }}</td>
+          <td class="py-3 px-4">
+            <span class="badge badge-info"
+              >{{ product.category or 'N/A' }}</span
+            >
+          </td>
+          <td class="py-3 px-4 font-semibold text-gray-900">
+            ₹{{ "%.2f"|format(product.price|float) }}
+          </td>
+          <td class="py-3 px-4">
+            <span
+              class="badge {% if product.total_stock > 50 %}badge-success{% elif product.total_stock > product.min_stock_level %}badge-warning{% else %}badge-danger{% endif %}"
+            >
+              {{ product.total_stock }} units
+            </span>
+            {% if product.batch_count > 0 %}
+            <span class="text-xs text-gray-500 ml-1"
+              >({{ product.batch_count }} batches)</span
+            >
+            {% endif %}
+          </td>
+          <td class="py-3 px-4 text-gray-600 text-sm">
+            {% if product.nearest_expiry %} {{
+            product.nearest_expiry.strftime('%Y-%m-%d') }} {% else %}
+            <span class="text-gray-400">-</span>
+            {% endif %}
+          </td>
+          <td class="py-3 px-4">
+            <div class="flex gap-1.5 items-center">
+              <a
+                href="{{ url_for('view_batches', product_id=product.id) }}"
+                class="badge badge-primary"
+                title="View Batches"
+              >
+                <i class="fas fa-boxes text-sm"></i>
+              </a>
+              <a
+                href="{{ url_for('view_product', product_id=product.id) }}"
+                class="badge badge-info"
+                title="View Details"
+              >
+                <i class="fas fa-eye text-sm"></i>
+              </a>
+
+              {% if session.get('role') == 'owner' %}
+              <a
+                href="{{ url_for('edit_product', product_id=product.id) }}"
+                class="badge badge-warning"
+                title="Edit Product"
+              >
+                <i class="fas fa-edit text-sm"></i>
+              </a>
+
+              <form
+                method="POST"
+                action="{{ url_for('delete_product', product_id=product.id) }}"
+                class="inline"
+                onsubmit="return confirm('Are you sure you want to delete {{ product.name }}? This action cannot be undone.');"
+              >
+                <button
+                  type="submit"
+                  class="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                  title="Delete Product"
+                >
+                  <i class="fas fa-trash text-sm"></i>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center py-8 text-gray-500 text-sm">
+            No products found
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  function filterInventory() {
+    const searchInput = document
+      .getElementById("inventorySearch")
+      .value.toLowerCase();
+    const tableRows = document.querySelectorAll("tbody tr");
+    let visibleCount = 0;
+
+    tableRows.forEach((row) => {
+      const name = row.cells[0].textContent.toLowerCase();
+      const manufacturer = row.cells[1].textContent.toLowerCase();
+      const category = row.cells[2].textContent.toLowerCase();
+
+      if (
+        name.includes(searchInput) ||
+        manufacturer.includes(searchInput) ||
+        category.includes(searchInput)
+      ) {
+        row.style.display = "";
+        visibleCount++;
+      } else {
+        row.style.display = "none";
+      }
+    });
+
+    // Show message if no results
+    const noResults = document.getElementById("noResults");
+    if (visibleCount === 0 && searchInput !== "") {
+      if (!noResults) {
+        const tbody = document.querySelector("tbody");
+        const tr = document.createElement("tr");
+        tr.id = "noResults";
+        tr.innerHTML =
+          '<td colspan="7" class="px-6 py-12 text-center text-slate-500"><i class="fas fa-search text-4xl mb-4 block text-slate-300"></i>No products found</td>';
+        tbody.appendChild(tr);
+      }
+    } else if (noResults) {
+      noResults.remove();
+    }
+  }
+
+  // Table Sorting Function
+  let sortDirection = {};
+
+  function sortTable(columnIndex) {
+    const table = document.getElementById("inventoryTable");
+    const tbody = document.getElementById("inventoryTableBody");
+    const rows = Array.from(tbody.querySelectorAll("tr")).filter(
+      (row) => !row.id || row.id !== "noResults",
+    );
+
+    if (rows.length === 0) return;
+
+    if (sortDirection[columnIndex] === undefined) {
+      sortDirection[columnIndex] = "asc";
+    } else {
+      sortDirection[columnIndex] =
+        sortDirection[columnIndex] === "asc" ? "desc" : "asc";
+    }
+
+    const direction = sortDirection[columnIndex];
+    const isAscending = direction === "asc";
+
+    rows.sort((a, b) => {
+      let aValue = a.cells[columnIndex].textContent.trim();
+      let bValue = b.cells[columnIndex].textContent.trim();
+
+      // Handle Price column (remove ₹ and convert to number)
+      if (columnIndex === 3) {
+        aValue = parseFloat(aValue.replace("₹", "").replace(",", "")) || 0;
+        bValue = parseFloat(bValue.replace("₹", "").replace(",", "")) || 0;
+      }
+      // Handle Stock column (extract number from "X units")
+      else if (columnIndex === 4) {
+        aValue = parseInt(aValue.replace(/[^0-9]/g, "")) || 0;
+        bValue = parseInt(bValue.replace(/[^0-9]/g, "")) || 0;
+      }
+
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return isAscending ? aValue - bValue : bValue - aValue;
+      } else {
+        aValue = String(aValue).toLowerCase();
+        bValue = String(bValue).toLowerCase();
+        if (aValue < bValue) return isAscending ? -1 : 1;
+        if (aValue > bValue) return isAscending ? 1 : -1;
+        return 0;
+      }
+    });
+
+    tbody.innerHTML = "";
+    rows.forEach((row) => tbody.appendChild(row));
+    updateSortIcons(columnIndex, direction);
+  }
+
+  function updateSortIcons(activeColumn, direction) {
+    const headers = document.querySelectorAll("#inventoryTable thead th");
+    headers.forEach((header, index) => {
+      const icon = header.querySelector("i");
+      if (icon) {
+        if (index === activeColumn) {
+          icon.className =
+            direction === "asc"
+              ? "fas fa-sort-up text-primary text-xs"
+              : "fas fa-sort-down text-primary text-xs";
+        } else {
+          icon.className = "fas fa-sort text-gray-400 text-xs";
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}

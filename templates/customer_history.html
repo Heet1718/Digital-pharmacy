@@ -1,0 +1,164 @@
+{% extends "base.html" %} {% block title %}Customer History - MediStore Pro{%
+endblock %} {% block content %}
+<div class="section-spacing">
+  <h1 class="page-title">Welcome, {{ customer.name }}!</h1>
+  <p class="page-subtitle">{{ customer.phone }}</p>
+</div>
+
+<!-- Customer Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 section-spacing">
+  <div class="stat-card">
+    <p class="stat-label">Total Bills</p>
+    <h3 class="stat-value">{{ stats.total_bills or 0 }}</h3>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Total Spent</p>
+    <h3 class="stat-value">
+      ₹{{ "%.2f"|format(stats.total_spent|float or 0) }}
+    </h3>
+  </div>
+  <div class="stat-card">
+    <p class="stat-label">Unique Medicines</p>
+    <h3 class="stat-value">{{ stats.unique_medicines or 0 }}</h3>
+  </div>
+</div>
+
+<!-- Regular Medicines -->
+{% if regular_purchases %}
+<div class="card section-spacing">
+  <div class="border-b border-gray-200 px-5 py-3.5">
+    <h3 class="text-base font-semibold text-gray-900">
+      Your Regular Medicines
+    </h3>
+  </div>
+  <div class="p-5">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      {% for item in regular_purchases %}
+      <div class="border border-gray-200 rounded-md p-3 hover:border-primary">
+        <div class="flex justify-between items-start mb-2">
+          <h5 class="text-sm font-semibold text-gray-900">
+            {{ item.medicine_name }}
+          </h5>
+          {% if item.stock_quantity %}
+          <span
+            class="badge {% if item.stock_quantity > 20 %}badge-success{% elif item.stock_quantity > 5 %}badge-warning{% else %}badge-danger{% endif %}"
+          >
+            {{ item.stock_quantity }}
+          </span>
+          {% else %}
+          <span class="badge badge-danger">Out of stock</span>
+          {% endif %}
+        </div>
+        <div>
+          {% if item.price %}
+          <p class="text-lg font-semibold text-gray-900 mb-1">
+            ₹{{ "%.2f"|format(item.price|float) }}
+          </p>
+          {% endif %}
+          <p class="text-gray-600 text-xs">
+            Default Qty: {{ item.default_quantity }}
+          </p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-5 text-center">
+      <a
+        href="{{ url_for('quick_billing', customer_id=customer.id) }}"
+        class="inline-flex items-center gap-2 bg-primary hover:bg-blue-600 text-white font-medium px-6 py-2.5 rounded text-sm"
+      >
+        Add All to Cart & Go to Billing
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Recent Bills -->
+{% if recent_bills %}
+<div class="bg-white border border-gray-200 rounded-md overflow-hidden">
+  <div class="border-b border-gray-200 px-5 py-3.5">
+    <h3 class="text-base font-semibold text-gray-900">
+      Recent Purchase History
+    </h3>
+  </div>
+  <div class="p-4">
+    <div class="overflow-x-auto">
+      <table class="w-full data-table">
+        <thead class="bg-gray-50">
+          <tr>
+            <th
+              class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+            >
+              Bill #
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+            >
+              Date
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+            >
+              Items
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+            >
+              Amount
+            </th>
+            <th
+              class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+            >
+              Action
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bill in recent_bills %}
+          <tr class="border-b border-gray-100 hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium text-primary">
+              {{ bill.bill_number }}
+            </td>
+            <td class="px-4 py-3 text-gray-600">
+              {{ bill.bill_date.strftime('%d %b %Y') }}
+            </td>
+            <td class="px-4 py-3 text-gray-600">{{ bill.item_count }} items</td>
+            <td class="px-4 py-3 font-semibold text-gray-900">
+              ₹{{ "%.2f"|format(bill.total_amount|float) }}
+            </td>
+            <td class="px-4 py-3">
+              <a
+                href="{{ url_for('invoice', bill_id=bill.id) }}"
+                class="bg-primary hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-medium"
+              >
+                View
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %} {% if not regular_purchases and not recent_bills %}
+<div class="text-center py-12">
+  <i class="fas fa-inbox text-gray-300 text-4xl mb-3"></i>
+  <p class="text-base text-gray-600 mb-1">No purchase history found</p>
+  <p class="text-gray-500 text-sm">
+    Contact our staff to add your regular medicines
+  </p>
+</div>
+{% endif %}
+
+<div class="mt-6 text-center">
+  <a
+    href="{{ url_for('customer_lookup') }}"
+    class="border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium px-4 py-2 rounded text-sm"
+  >
+    Back to Lookup
+  </a>
+</div>
+{% endblock %}

@@ -1,0 +1,376 @@
+{% extends "base.html" %} {% block title %}Customers - MediStore Pro{% endblock
+%} {% block content %}
+<div class="section-spacing">
+  <h1 class="page-title">Customer Management</h1>
+  <p class="page-subtitle">Manage customer information and history</p>
+</div>
+
+<!-- Search Box -->
+<div class="card section-spacing">
+  <div class="card-body bg-primary text-white">
+    <h3 class="font-semibold flex items-center gap-2">
+      <i class="fas fa-search"></i> Search Customers
+    </h3>
+  </div>
+  <div class="card-body">
+    <div class="flex gap-3">
+      <input
+        type="text"
+        id="customerSearch"
+        placeholder="Search by name, phone, or email..."
+        class="form-input flex-1"
+      />
+      <button onclick="filterCustomers()" class="btn-primary">
+        <i class="fas fa-search"></i> Search
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="overflow-x-auto">
+    <table class="w-full data-table" id="customersTable">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase cursor-pointer hover:bg-gray-100 transition-colors select-none"
+            onclick="sortTable(0)"
+          >
+            <div class="flex items-center gap-2">
+              <span>Name</span>
+              <i class="fas fa-sort text-gray-400 text-xs"></i>
+            </div>
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+            onclick="sortTable(1)"
+          >
+            <div class="flex items-center gap-2">
+              <span>Phone</span>
+              <i class="fas fa-sort text-gray-400 text-xs"></i>
+            </div>
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+            onclick="sortTable(2)"
+          >
+            <div class="flex items-center gap-2">
+              <span>Email</span>
+              <i class="fas fa-sort text-gray-400 text-xs"></i>
+            </div>
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+            onclick="sortTable(3)"
+          >
+            <div class="flex items-center gap-2">
+              <span>Total Bills</span>
+              <i class="fas fa-sort text-gray-400 text-xs"></i>
+            </div>
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+            onclick="sortTable(4)"
+          >
+            <div class="flex items-center gap-2">
+              <span>Total Spent</span>
+              <i class="fas fa-sort text-gray-400 text-xs"></i>
+            </div>
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+            onclick="sortTable(5)"
+          >
+            <div class="flex items-center gap-2">
+              <span>Registered On</span>
+              <i class="fas fa-sort text-gray-400 text-xs"></i>
+            </div>
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200" id="customersTableBody">
+        {% for customer in customers %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-4 py-3 text-sm font-semibold text-gray-800">
+            {{ customer.name }}
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-600">
+            <i class="fas fa-phone text-primary mr-1"></i> {{ customer.phone }}
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-600">
+            {{ customer.email or 'N/A' }}
+          </td>
+          <td class="px-4 py-3 text-center text-sm text-gray-800">
+            {{ customer.total_bills }}
+          </td>
+          <td class="px-4 py-3 text-sm text-primary font-semibold">
+            ₹{{ "%.2f"|format(customer.total_spent|float) }}
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-500">
+            {{ customer.created_at.strftime('%d %b %Y') }}
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex gap-2">
+              <a
+                href="{{ url_for('customer_billing_history', customer_id=customer.id) }}"
+                class="bg-primary hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-medium inline-flex items-center gap-1"
+                title="View Billing History"
+              >
+                <i class="fas fa-history"></i> History
+              </a>
+              <a
+                href="{{ url_for('manage_regular_purchases', customer_id=customer.id) }}"
+                class="bg-warning hover:bg-yellow-600 text-white px-3 py-1.5 rounded text-xs font-medium inline-flex items-center gap-1"
+                title="Manage Regular Purchases"
+              >
+                <i class="fas fa-star"></i> Regular
+              </a>
+              <a
+                href="{{ url_for('quick_billing', customer_id=customer.id) }}"
+                class="bg-success hover:bg-green-700 text-white px-3 py-1.5 rounded text-xs font-medium inline-flex items-center gap-1"
+                title="Quick Billing"
+              >
+                <i class="fas fa-shopping-cart"></i> Bill
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+            No customers registered yet
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Customer Modal -->
+<div
+  id="addCustomerModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+>
+  <div class="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4">
+    <div
+      class="bg-primary px-6 py-4 rounded-t-lg flex justify-between items-center"
+    >
+      <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+        <i class="fas fa-user-plus"></i> Add New Customer
+      </h2>
+      <button
+        onclick="
+          document.getElementById('addCustomerModal').classList.add('hidden')
+        "
+        class="text-white hover:text-gray-200 text-3xl font-bold leading-none transition-colors"
+      >
+        &times;
+      </button>
+    </div>
+    <form method="POST" action="{{ url_for('add_customer') }}" class="p-6">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Customer Name *</label
+        >
+        <input
+          type="text"
+          name="name"
+          required
+          placeholder="Enter full name"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+        />
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Phone Number *</label
+        >
+        <input
+          type="tel"
+          name="phone"
+          required
+          placeholder="10-digit number"
+          pattern="[0-9]{10}"
+          maxlength="10"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+        />
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Email (Optional)</label
+        >
+        <input
+          type="email"
+          name="email"
+          placeholder="customer@example.com"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+        />
+      </div>
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2"
+          >Address (Optional)</label
+        >
+        <textarea
+          name="address"
+          rows="3"
+          placeholder="Enter address"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+        ></textarea>
+      </div>
+      <div class="flex gap-3 justify-end">
+        <button
+          type="button"
+          onclick="
+            document.getElementById('addCustomerModal').classList.add('hidden')
+          "
+          class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="bg-primary hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold inline-flex items-center gap-2 transition-all"
+        >
+          <i class="fas fa-save"></i> Save Customer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  window.onclick = function (event) {
+    const modal = document.getElementById("addCustomerModal");
+    if (event.target === modal) {
+      modal.classList.add("hidden");
+    }
+  };
+
+  function filterCustomers() {
+    const searchInput = document
+      .getElementById("customerSearch")
+      .value.toLowerCase();
+
+    // Remove existing no results message first
+    const existingNoResults = document.getElementById("noResults");
+    if (existingNoResults) {
+      existingNoResults.remove();
+    }
+
+    const tableRows = document.querySelectorAll("tbody tr");
+    let visibleCount = 0;
+
+    tableRows.forEach((row) => {
+      // Skip if this is the no results row
+      if (row.id === "noResults") return;
+
+      const name = row.cells[0].textContent.toLowerCase();
+      const phone = row.cells[1].textContent.toLowerCase();
+      const email = row.cells[2].textContent.toLowerCase();
+
+      if (
+        name.includes(searchInput) ||
+        phone.includes(searchInput) ||
+        email.includes(searchInput)
+      ) {
+        row.style.display = "";
+        visibleCount++;
+      } else {
+        row.style.display = "none";
+      }
+    });
+
+    // Show message if no results
+    if (visibleCount === 0 && searchInput !== "") {
+      const tbody = document.querySelector("tbody");
+      const tr = document.createElement("tr");
+      tr.id = "noResults";
+      tr.innerHTML =
+        '<td colspan="7" class="px-6 py-12 text-center text-gray-500"><i class="fas fa-search text-4xl mb-4 block text-gray-300"></i>No customers found</td>';
+      tbody.appendChild(tr);
+    }
+  }
+
+  // Table Sorting Function
+  let sortDirection = {};
+
+  function sortTable(columnIndex) {
+    const table = document.getElementById("customersTable");
+    const tbody = document.getElementById("customersTableBody");
+    const rows = Array.from(tbody.querySelectorAll("tr")).filter(
+      (row) => !row.id || row.id !== "noResults",
+    );
+
+    if (rows.length === 0) return;
+
+    if (sortDirection[columnIndex] === undefined) {
+      sortDirection[columnIndex] = "asc";
+    } else {
+      sortDirection[columnIndex] =
+        sortDirection[columnIndex] === "asc" ? "desc" : "asc";
+    }
+
+    const direction = sortDirection[columnIndex];
+    const isAscending = direction === "asc";
+
+    rows.sort((a, b) => {
+      let aValue = a.cells[columnIndex].textContent.trim();
+      let bValue = b.cells[columnIndex].textContent.trim();
+
+      // Handle Total Bills column (numeric)
+      if (columnIndex === 3) {
+        aValue = parseInt(aValue) || 0;
+        bValue = parseInt(bValue) || 0;
+      }
+      // Handle Total Spent column (remove ₹ and convert to number)
+      else if (columnIndex === 4) {
+        aValue = parseFloat(aValue.replace("₹", "").replace(",", "")) || 0;
+        bValue = parseFloat(bValue.replace("₹", "").replace(",", "")) || 0;
+      }
+      // Handle Registered On column (date)
+      else if (columnIndex === 5) {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      }
+
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return isAscending ? aValue - bValue : bValue - aValue;
+      } else if (aValue instanceof Date && bValue instanceof Date) {
+        return isAscending ? aValue - bValue : bValue - aValue;
+      } else {
+        aValue = String(aValue).toLowerCase();
+        bValue = String(bValue).toLowerCase();
+        if (aValue < bValue) return isAscending ? -1 : 1;
+        if (aValue > bValue) return isAscending ? 1 : -1;
+        return 0;
+      }
+    });
+
+    tbody.innerHTML = "";
+    rows.forEach((row) => tbody.appendChild(row));
+    updateSortIcons(columnIndex, direction);
+  }
+
+  function updateSortIcons(activeColumn, direction) {
+    const headers = document.querySelectorAll("#customersTable thead th");
+    headers.forEach((header, index) => {
+      const icon = header.querySelector("i");
+      if (icon) {
+        if (index === activeColumn) {
+          icon.className =
+            direction === "asc"
+              ? "fas fa-sort-up text-primary text-xs"
+              : "fas fa-sort-down text-primary text-xs";
+        } else {
+          icon.className = "fas fa-sort text-gray-400 text-xs";
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}

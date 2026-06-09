@@ -1,0 +1,380 @@
+{% extends "base.html" %} {% block title %}{{ customer.name }} - Billing History
+- MediStore Pro{% endblock %} {% block content %}
+<div class="container mx-auto px-6 py-8">
+  <!-- Header with Back Button -->
+  <div class="mb-6">
+    <a
+      href="{{ url_for('customers') }}"
+      class="inline-flex items-center gap-2 text-primary hover:text-blue-600 font-semibold transition-colors"
+    >
+      <i class="fas fa-arrow-left"></i> Back to Customers
+    </a>
+  </div>
+
+  <!-- Customer Info Header -->
+  <div
+    class="card section-spacing bg-primary text-white"
+  >
+    <div class="card-body">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div
+            class="w-14 h-14 bg-white rounded-full flex items-center justify-center"
+          >
+            <i class="fas fa-user-circle text-primary text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-semibold mb-1">{{ customer.name }}</h1>
+            <p class="text-sm opacity-90">
+              <i class="fas fa-phone mr-1"></i>{{ customer.phone }} {% if
+              customer.email %} • <i class="fas fa-envelope mr-1"></i>{{
+              customer.email }} {% endif %}
+            </p>
+          </div>
+        </div>
+        <div class="text-right">
+          <a
+            href="{{ url_for('quick_billing', customer_id=customer.id) }}"
+            class="inline-flex items-center gap-2 bg-white text-primary font-semibold text-sm px-5 py-2.5 rounded-md hover:bg-gray-50 transition-all shadow-sm"
+          >
+            <i class="fas fa-shopping-cart"></i> Quick Billing
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Statistics -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 section-spacing">
+      <!-- Total Bills -->
+      <div class="stat-card">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="stat-label">Total Bills</p>
+            <p class="stat-value">{{ summary.total_bills }}</p>
+          </div>
+          <div class="stat-icon bg-blue-50">
+            <i class="fas fa-file-invoice text-blue-600 text-lg"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Spent -->
+      <div class="stat-card">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="stat-label">Total Spent</p>
+            <p class="stat-value">
+              ₹{{ "%.2f"|format(summary.total_spent|float) }}
+            </p>
+          </div>
+          <div class="stat-icon bg-green-50">
+            <i class="fas fa-rupee-sign text-green-600 text-lg"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Average Bill -->
+      <!-- <div class="stat-card">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="stat-label">Average Bill</p>
+            <p class="stat-value">
+              ₹{{ "%.2f"|format(summary.avg_bill|float) }}
+            </p>
+          </div>
+          <div class="stat-icon bg-purple-50">
+            <i class="fas fa-chart-line text-purple-600 text-lg"></i>
+          </div>
+        </div>
+      </div> -->
+
+      <!-- Last Purchase -->
+      <div class="stat-card">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="stat-label">Last Purchase</p>
+            <p class="stat-value text-base">
+              {% if summary.last_purchase %} {{
+              summary.last_purchase.strftime('%d %b %Y') }}
+              <small class="text-xs text-gray-500 block font-normal"
+                >{{ summary.last_purchase.strftime('%I:%M %p') }}</small
+              >
+              {% else %}
+              <span class="text-sm text-gray-400">No purchases</span>
+              {% endif %}
+            </p>
+          </div>
+          <div class="stat-icon bg-orange-50">
+            <i class="fas fa-clock text-orange-600 text-lg"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Purchased Medicines -->
+  {% if top_medicines %}
+  <div class="card section-spacing mx-6">
+    <div class="card-body" style="background-color: #0066FF; color: white;">
+      <h2 class="font-semibold">
+        <i class="fas fa-star mr-2"></i>Top Purchased Medicines
+      </h2>
+    </div>
+
+    <div class="card-body">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {% for medicine in top_medicines %}
+          <div
+            class="border border-gray-200 rounded-lg p-4 hover:border-primary transition-colors"
+          >
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="text-sm font-semibold text-gray-800 flex-1">
+                {{ medicine.medicine_name }}
+              </h3>
+              <span
+                class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 ml-2"
+              >
+                {{ medicine.total_quantity }} units
+              </span>
+            </div>
+            <div
+              class="flex items-center justify-between text-xs text-gray-600"
+            >
+              <span>
+                <i class="fas fa-shopping-bag mr-1 text-primary"></i>
+                {{ medicine.purchase_count }} times
+              </span>
+              <span class="font-semibold text-green-600">
+                ₹{{ "%.2f"|format(medicine.total_spent|float) }}
+              </span>
+            </div>
+          </div>
+          {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Bills Table -->
+  <div class="card mx-6">
+    <div class="card-body" style="background-color: #0066FF; color: white;">
+      <div class="flex items-center justify-between">
+        <h2 class="font-semibold">
+          <i class="fas fa-file-invoice-dollar mr-2"></i>All Bills
+        </h2>
+        <span
+          class="text-xs bg-white bg-opacity-20 px-3 py-1 rounded-full font-medium"
+        >
+          {{ bills|length }} records
+        </span>
+      </div>
+    </div>
+
+      {% if bills %}
+      <div class="overflow-x-auto">
+        <table class="w-full" id="billsTable">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                onclick="sortTable(0)"
+              >
+                <div class="flex items-center gap-2">
+                  <span>Bill #</span>
+                  <i class="fas fa-sort text-gray-400 text-xs"></i>
+                </div>
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                onclick="sortTable(1)"
+              >
+                <div class="flex items-center gap-2">
+                  <span>Date & Time</span>
+                  <i class="fas fa-sort text-gray-400 text-xs"></i>
+                </div>
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                onclick="sortTable(2)"
+              >
+                <div class="flex items-center gap-2">
+                  <span>Staff</span>
+                  <i class="fas fa-sort text-gray-400 text-xs"></i>
+                </div>
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                onclick="sortTable(3)"
+              >
+                <div class="flex items-center gap-2">
+                  <span>Items</span>
+                  <i class="fas fa-sort text-gray-400 text-xs"></i>
+                </div>
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                onclick="sortTable(4)"
+              >
+                <div class="flex items-center gap-2">
+                  <span>Subtotal</span>
+                  <i class="fas fa-sort text-gray-400 text-xs"></i>
+                </div>
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                onclick="sortTable(5)"
+              >
+                <div class="flex items-center gap-2">
+                  <span>GST</span>
+                  <i class="fas fa-sort text-gray-400 text-xs"></i>
+                </div>
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+                onclick="sortTable(6)"
+              >
+                <div class="flex items-center gap-2">
+                  <span>Total Amount</span>
+                  <i class="fas fa-sort text-gray-400 text-xs"></i>
+                </div>
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200" id="billsTableBody">
+            {% for bill in bills %}
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-4 py-3 text-sm font-semibold text-primary">
+                {{ bill.bill_number }}
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-600">
+                <div>{{ bill.bill_date.strftime('%d %b %Y') }}</div>
+                <small class="text-xs text-gray-500"
+                  >{{ bill.bill_date.strftime('%I:%M %p') }}</small
+                >
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-600">
+                <i class="fas fa-user text-purple-500 mr-1"></i>
+                {{ bill.staff_name or 'N/A' }}
+              </td>
+              <td class="px-4 py-3 text-center">
+                <span
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800"
+                  >{{ bill.item_count }}</span
+                >
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-700">
+                ₹{{ "%.2f"|format(bill.subtotal|float) }}
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-700">
+                ₹{{ "%.2f"|format(bill.gst|float) }}
+              </td>
+              <td class="px-4 py-3 text-sm text-primary font-bold">
+                ₹{{ "%.2f"|format(bill.total_amount|float) }}
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex gap-2">
+                  <a
+                    href="{{ url_for('invoice', bill_id=bill.id) }}"
+                    class="bg-primary hover:bg-blue-600 text-white px-2.5 py-1.5 rounded text-xs transition-colors"
+                    title="View Invoice"
+                  >
+                    <i class="fas fa-eye"></i> View
+                  </a>
+                  <a
+                    href="{{ url_for('invoice', bill_id=bill.id) }}?print=1"
+                    class="bg-success hover:bg-green-700 text-white px-2.5 py-1.5 rounded text-xs transition-colors"
+                    title="Print Invoice"
+                    target="_blank"
+                  >
+                    <i class="fas fa-print"></i> Print
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-16">
+        <i class="fas fa-inbox text-gray-300 text-6xl mb-4"></i>
+        <p class="text-xl font-semibold text-gray-700 mb-2">No bills found</p>
+        <small class="text-gray-500"
+          >This customer hasn't made any purchases yet</small
+        >
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    // Table Sorting Function
+    let sortDirection = {};
+
+    function sortTable(columnIndex) {
+      const table = document.getElementById("billsTable");
+      const tbody = document.getElementById("billsTableBody");
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+
+      if (rows.length === 0) return;
+
+      // Initialize sort direction
+      if (!sortDirection[columnIndex]) {
+        sortDirection[columnIndex] = "asc";
+      } else {
+        sortDirection[columnIndex] =
+          sortDirection[columnIndex] === "asc" ? "desc" : "asc";
+      }
+
+      rows.sort((a, b) => {
+        let aValue = a.cells[columnIndex].textContent.trim();
+        let bValue = b.cells[columnIndex].textContent.trim();
+
+        // Handle numeric columns
+        if (
+          columnIndex === 3 ||
+          columnIndex === 4 ||
+          columnIndex === 5 ||
+          columnIndex === 6
+        ) {
+          aValue = parseFloat(aValue.replace(/[₹,]/g, "")) || 0;
+          bValue = parseFloat(bValue.replace(/[₹,]/g, "")) || 0;
+        }
+
+        // Handle date column
+        if (columnIndex === 1) {
+          aValue = new Date(aValue);
+          bValue = new Date(bValue);
+        }
+
+        if (sortDirection[columnIndex] === "asc") {
+          return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+        } else {
+          return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+        }
+      });
+
+      // Re-append sorted rows
+      rows.forEach((row) => tbody.appendChild(row));
+
+      // Update sort icons
+      table.querySelectorAll("thead th i").forEach((icon, index) => {
+        if (index === columnIndex) {
+          icon.className =
+            sortDirection[columnIndex] === "asc"
+              ? "fas fa-sort-up text-primary text-xs"
+              : "fas fa-sort-down text-primary text-xs";
+        } else {
+          icon.className = "fas fa-sort text-gray-400 text-xs";
+        }
+      });
+    }
+  </script>
+  {% endblock %}
+</div>

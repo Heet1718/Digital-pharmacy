@@ -1,0 +1,513 @@
+{% extends "base.html" %} {% block title %}Checkout - MediStore Pro{% endblock
+%} {% block content %}
+<div class="section-spacing">
+  <h1 class="page-title">Checkout</h1>
+  <p class="page-subtitle">Review and finalize your bill</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Bill Items -->
+  <div class="lg:col-span-2 card">
+    <div class="card-body border-b border-gray-200">
+      <h3 class="section-header">Bill Items</h3>
+    </div>
+    <div class="card-body">
+      <div class="overflow-x-auto">
+        <table class="w-full data-table">
+          <thead class="bg-gray-50">
+            <tr>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+              >
+                Medicine
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+              >
+                Price
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+              >
+                Qty
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+              >
+                Total
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in cart %}
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+              <td class="px-4 py-3 font-medium text-gray-900">
+                {{ item.name }}
+              </td>
+              <td class="px-4 py-3 text-gray-600">
+                ₹{{ "%.2f"|format(item.price|float) }}
+              </td>
+              <td class="px-4 py-3">
+                <span class="badge badge-info"> {{ item.quantity }} </span>
+              </td>
+              <td class="px-4 py-3 font-semibold text-gray-900">
+                ₹{{ "%.2f"|format((item.price * item.quantity)|float) }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Info & Summary -->
+  <div class="space-y-6">
+    <!-- Customer Information -->
+    <div class="bg-white border border-gray-200 rounded-md overflow-hidden">
+      <div class="border-b border-gray-200 px-5 py-3.5">
+        <h3 class="text-base font-semibold text-gray-900">Customer Details</h3>
+      </div>
+      <div class="p-5">
+        <form
+          method="POST"
+          action="{{ url_for('checkout') }}"
+          id="checkoutForm"
+        >
+          <div class="mb-4">
+            <label class="form-label">Phone Number</label>
+            <div class="relative">
+              <input
+                type="tel"
+                name="customer_phone"
+                id="customer_phone"
+                placeholder="Enter 10-digit phone number..."
+                maxlength="10"
+                pattern="[0-9]{10}"
+                value="{{ customer_info.phone if customer_info else '' }}"
+                oninput="
+                  searchCustomers();
+                  validatePhoneNumber();
+                "
+                autocomplete="off"
+                class="w-full form-input"
+              />
+              <div
+                id="phoneSuggestions"
+                class="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg mt-1 hidden max-h-60 overflow-y-auto"
+              ></div>
+            </div>
+            <small id="phoneError" class="text-red-600 text-xs mt-1 hidden"
+              >Phone number must be exactly 10 digits</small
+            >
+            <small id="phoneHelp" class="text-gray-500 text-xs mt-1 block"
+              >Leave empty for walk-in customer</small
+            >
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label"
+              >Customer Name<span id="nameRequired" class="text-red-600 hidden">
+                *</span
+              ></label
+            >
+            <input
+              type="text"
+              name="customer_name"
+              id="customer_name"
+              placeholder="Enter customer name"
+              value="{{ customer_info.name if customer_info else 'Walk-in Customer' }}"
+              onfocus="handleNameFocus()"
+              class="w-full form-input"
+            />
+            <small class="text-gray-500 text-xs mt-1 block"
+              >Required when phone number is provided</small
+            >
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Email (Optional)</label>
+            <input
+              type="email"
+              name="customer_email"
+              id="customer_email"
+              placeholder="customer@example.com"
+              value="{{ customer_info.email if customer_info else '' }}"
+              class="w-full form-input"
+            />
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Address (Optional)</label>
+            <textarea
+              name="customer_address"
+              id="customer_address"
+              rows="2"
+              placeholder="Enter address"
+              class="w-full form-input"
+            >
+{{ customer_info.address if customer_info else '' }}</textarea
+            >
+          </div>
+
+          <input
+            type="hidden"
+            name="customer_id"
+            id="customer_id"
+            value="{{ customer_info.id if customer_info else '' }}"
+          />
+
+          <div id="customerStatus" class="mb-4"></div>
+
+          <div class="bg-gray-50 rounded p-4 mb-4">
+            <h4 class="text-sm font-semibold text-gray-900 mb-3">
+              Bill Summary
+            </h4>
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm text-gray-600">
+                <span>Subtotal</span>
+                <span class="font-medium"
+                  >₹{{ "%.2f"|format(subtotal|float) }}</span
+                >
+              </div>
+              <div class="flex justify-between text-sm text-gray-600">
+                <span>GST (12%)</span>
+                <span class="font-medium"
+                  >₹{{ "%.2f"|format(gst_amount|float) }}</span
+                >
+              </div>
+              <div
+                class="flex justify-between text-base font-semibold text-gray-900 pt-2 border-t border-gray-200"
+              >
+                <span>Total Amount</span>
+                <span>₹{{ "%.2f"|format(total_amount|float) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Method Selection -->
+          <div class="mb-4">
+            <label class="form-label"
+              >Payment Method <span class="text-red-600">*</span></label
+            >
+            <div class="space-y-3">
+              <label
+                class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+              >
+                <input
+                  type="radio"
+                  name="payment_method"
+                  value="cash"
+                  checked
+                  class="w-4 h-4 text-primary focus:ring-primary"
+                  onchange="updatePaymentButton()"
+                />
+                <div class="ml-3 flex-1">
+                  <div class="flex items-center gap-2">
+                    <i class="fas fa-money-bill-wave text-green-600"></i>
+                    <span class="font-medium text-gray-900">Cash Payment</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-0.5">
+                    Invoice will be generated immediately
+                  </p>
+                </div>
+              </label>
+
+              <label
+                class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+              >
+                <input
+                  type="radio"
+                  name="payment_method"
+                  value="upi"
+                  class="w-4 h-4 text-primary focus:ring-primary"
+                  onchange="updatePaymentButton()"
+                />
+                <div class="ml-3 flex-1">
+                  <div class="flex items-center gap-2">
+                    <i class="fas fa-qrcode text-blue-600"></i>
+                    <span class="font-medium text-gray-900">UPI Payment</span>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-0.5">
+                    Scan QR code to complete payment
+                  </p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            class="w-full btn-primary mb-3"
+            id="proceedButton"
+          >
+            <i class="fas fa-arrow-right mr-2"></i>
+            <span id="buttonText">Generate Bill</span>
+          </button>
+
+          <a
+            href="{{ url_for('billing') }}"
+            class="w-full btn-secondary flex items-center justify-center gap-2"
+          >
+            <i class="fas fa-arrow-left text-xs"></i> Back to Billing
+          </a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let searchTimeout;
+  let nameManuallyChanged = false; // Track if user manually changed the name
+
+  // Validate phone number is exactly 10 digits
+  function validatePhoneNumber() {
+    const phone = document.getElementById("customer_phone").value;
+    const phoneError = document.getElementById("phoneError");
+    const phoneHelp = document.getElementById("phoneHelp");
+    const nameRequired = document.getElementById("nameRequired");
+    const nameField = document.getElementById("customer_name");
+
+    // Show/hide required asterisk based on phone input
+    if (phone.length > 0) {
+      nameRequired.classList.remove("hidden");
+
+      // Auto-clear "Walk-in Customer" when phone number is entered (but don't change focus)
+      if (nameField.value === "Walk-in Customer") {
+        nameField.value = "";
+        nameField.placeholder = "Enter customer name (required)";
+      }
+    } else {
+      nameRequired.classList.add("hidden");
+
+      // Only reset to "Walk-in Customer" if field is empty and wasn't manually changed
+      if (
+        (nameField.value === "" || nameField.value.trim() === "") &&
+        !nameManuallyChanged
+      ) {
+        nameField.value = "Walk-in Customer";
+        nameField.placeholder = "Enter customer name";
+      }
+    }
+
+    if (phone.length > 0 && phone.length !== 10) {
+      phoneError.classList.remove("hidden");
+      phoneHelp.classList.add("hidden");
+      return false;
+    } else {
+      phoneError.classList.add("hidden");
+      phoneHelp.classList.remove("hidden");
+      return true;
+    }
+  }
+
+  // Handle name field focus - clear "Walk-in Customer" if phone is provided
+  function handleNameFocus() {
+    const phone = document.getElementById("customer_phone").value;
+    const nameField = document.getElementById("customer_name");
+
+    if (phone.length > 0 && nameField.value === "Walk-in Customer") {
+      nameField.value = "";
+    }
+  }
+
+  // Track when user manually changes the name field
+  document.addEventListener("DOMContentLoaded", function () {
+    const nameField = document.getElementById("customer_name");
+
+    nameField.addEventListener("input", function () {
+      if (this.value !== "Walk-in Customer" && this.value.trim() !== "") {
+        nameManuallyChanged = true;
+      } else if (this.value === "" || this.value === "Walk-in Customer") {
+        nameManuallyChanged = false;
+      }
+    });
+  });
+
+  // Validate form before submission
+  document
+    .getElementById("checkoutForm")
+    .addEventListener("submit", function (e) {
+      const phone = document.getElementById("customer_phone").value;
+      const name = document.getElementById("customer_name").value.trim();
+
+      // If phone is provided, validate it
+      if (phone.length > 0) {
+        if (phone.length !== 10) {
+          e.preventDefault();
+          alert("Phone number must be exactly 10 digits");
+          document.getElementById("customer_phone").focus();
+          return false;
+        }
+
+        // If phone is provided, name is required
+        if (!name || name === "") {
+          e.preventDefault();
+          alert("Customer name is required when phone number is provided");
+          document.getElementById("customer_name").value = "";
+          document.getElementById("customer_name").focus();
+          return false;
+        }
+
+        // Name cannot be "Walk-in Customer" when phone is provided
+        if (
+          name.toLowerCase() === "walk-in customer" ||
+          name.toLowerCase() === "walk in customer"
+        ) {
+          e.preventDefault();
+          alert(
+            "Cannot use 'Walk-in Customer' as name when phone number is provided.\nPlease enter the actual customer name.",
+          );
+          document.getElementById("customer_name").value = "";
+          document.getElementById("customer_name").focus();
+          return false;
+        }
+      } else {
+        // If no phone, ensure name is "Walk-in Customer"
+        if (!name || name === "") {
+          document.getElementById("customer_name").value = "Walk-in Customer";
+        }
+      }
+
+      return true;
+    });
+
+  function searchCustomers() {
+    const phone = document.getElementById("customer_phone").value;
+    const suggestionsDiv = document.getElementById("phoneSuggestions");
+
+    // Clear previous timeout
+    clearTimeout(searchTimeout);
+
+    // Hide suggestions if less than 4 digits
+    if (phone.length < 4) {
+      suggestionsDiv.classList.add("hidden");
+      return;
+    }
+
+    // Debounce search
+    searchTimeout = setTimeout(() => {
+      fetch(`/api/search_customers?phone=${phone}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.customers && data.customers.length > 0) {
+            let html = '<div class="py-1">';
+            data.customers.forEach((customer) => {
+              html += `
+                <button
+                  type="button"
+                  onclick="selectCustomer('${customer.phone}', '${customer.name.replace(/'/g, "\\'")}', '${customer.email || ""}', '${customer.address ? customer.address.replace(/'/g, "\\'").replace(/\n/g, " ") : ""}', ${customer.id})"
+                  class="w-full text-left px-3 py-2 hover:bg-blue-50 text-sm border-b border-gray-100 last:border-0"
+                >
+                  <div class="font-medium text-gray-900">${customer.name}</div>
+                  <div class="text-xs text-gray-600">${customer.phone}</div>
+                </button>
+              `;
+            });
+            html += "</div>";
+            suggestionsDiv.innerHTML = html;
+            suggestionsDiv.classList.remove("hidden");
+          } else {
+            suggestionsDiv.innerHTML =
+              '<div class="px-3 py-2 text-sm text-gray-500">No customers found</div>';
+            suggestionsDiv.classList.remove("hidden");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          suggestionsDiv.classList.add("hidden");
+        });
+    }, 300);
+  }
+
+  function selectCustomer(phone, name, email, address, id) {
+    document.getElementById("customer_phone").value = phone;
+    document.getElementById("customer_name").value = name;
+    document.getElementById("customer_email").value = email;
+    document.getElementById("customer_address").value = address;
+    document.getElementById("customer_id").value = id;
+    document.getElementById("phoneSuggestions").classList.add("hidden");
+
+    document.getElementById("customer_name").readOnly = true;
+    document
+      .getElementById("customer_name")
+      .classList.add("bg-gray-100", "cursor-not-allowed");
+
+    document.getElementById("customerStatus").innerHTML =
+      '<div class="bg-green-50 border-l-4 border-green-500 text-green-800 p-3 rounded text-sm"><i class="fas fa-check-circle mr-2"></i>Existing customer found</div>';
+  }
+
+  // Close suggestions when clicking outside
+  document.addEventListener("click", function (event) {
+    const phoneInput = document.getElementById("customer_phone");
+    const suggestionsDiv = document.getElementById("phoneSuggestions");
+    if (event.target !== phoneInput && !suggestionsDiv.contains(event.target)) {
+      suggestionsDiv.classList.add("hidden");
+    }
+  });
+
+  function fetchCustomer() {
+    const phone = document.getElementById("customer_phone").value;
+    if (phone.length !== 10) {
+      document.getElementById("customerStatus").innerHTML =
+        '<div class="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded"><i class="fas fa-exclamation-triangle mr-2"></i>Please enter a valid 10-digit phone number</div>';
+      return;
+    }
+
+    fetch(`/api/customer/${phone}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.found) {
+          document.getElementById("customer_name").value = data.customer.name;
+          document.getElementById("customer_name").readOnly = true;
+          document
+            .getElementById("customer_name")
+            .classList.add("bg-slate-100", "cursor-not-allowed");
+          document.getElementById("customer_email").value =
+            data.customer.email || "";
+          document.getElementById("customer_address").value =
+            data.customer.address || "";
+          document.getElementById("customer_id").value = data.customer.id;
+          document.getElementById("customerStatus").innerHTML =
+            '<div class="bg-green-50 border-l-4 border-green-500 text-green-800 p-4 rounded"><i class="fas fa-check-circle mr-2"></i>Existing customer found</div>';
+        } else {
+          document.getElementById("customer_name").readOnly = false;
+          document
+            .getElementById("customer_name")
+            .classList.remove("bg-slate-100", "cursor-not-allowed");
+          document.getElementById("customer_id").value = "";
+          document.getElementById("customerStatus").innerHTML =
+            '<div class="bg-blue-50 border-l-4 border-blue-500 text-blue-800 p-4 rounded"><i class="fas fa-info-circle mr-2"></i>New customer - details will be saved</div>';
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        document.getElementById("customerStatus").innerHTML =
+          '<div class="bg-red-50 border-l-4 border-red-500 text-red-800 p-4 rounded"><i class="fas fa-exclamation-circle mr-2"></i>Error fetching customer</div>';
+      });
+  }
+
+  // Auto-fetch on page load if phone is pre-filled
+  window.addEventListener("DOMContentLoaded", function () {
+    const phone = document.getElementById("customer_phone").value;
+    if (phone && phone.length === 10) {
+      fetchCustomer();
+    }
+  });
+
+  // Update button text based on payment method selection
+  function updatePaymentButton() {
+    const paymentMethod = document.querySelector(
+      'input[name="payment_method"]:checked',
+    ).value;
+    const buttonText = document.getElementById("buttonText");
+
+    if (paymentMethod === "upi") {
+      buttonText.textContent = "Proceed to UPI Payment";
+    } else {
+      buttonText.textContent = "Generate Bill";
+    }
+  }
+</script>
+{% endblock %}

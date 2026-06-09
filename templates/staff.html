@@ -1,0 +1,702 @@
+{% extends "base.html" %} {% block title %}Staff Management - MediStore Pro{%
+endblock %} {% block content %}
+<div class="p-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center section-spacing">
+    <div>
+      <h1 class="page-title">Staff Management</h1>
+      <p class="page-subtitle">Create and manage staff accounts</p>
+    </div>
+    <button onclick="openAddModal()" class="btn-primary">
+      <i class="fas fa-user-plus"></i>
+      Add New Staff
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 section-spacing">
+    <div class="stat-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="stat-label">Total Staff</p>
+          <p class="stat-value">{{ staff_list|length }}</p>
+        </div>
+        <div class="stat-icon bg-blue-50">
+          <i class="fas fa-users text-primary text-lg"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="stat-label">Owners</p>
+          <p class="stat-value">
+            {{ staff_list|selectattr('role', 'equalto', 'owner')|list|length }}
+          </p>
+        </div>
+        <div class="stat-icon bg-purple-50">
+          <i class="fas fa-user-shield text-purple-600 text-lg"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="stat-label">Cashiers</p>
+          <p class="stat-value">
+            {{ staff_list|selectattr('role', 'equalto', 'cashier')|list|length
+            }}
+          </p>
+        </div>
+        <div class="stat-icon bg-green-50">
+          <i class="fas fa-user-tag text-green-600 text-lg"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="stat-label">Active</p>
+          <p class="stat-value">
+            {{ staff_list|selectattr('is_active', 'equalto', 1)|list|length }}
+          </p>
+        </div>
+        <div class="stat-icon bg-green-50">
+          <i class="fas fa-check-circle text-green-600 text-lg"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Staff Table -->
+  <div class="card">
+    <div class="overflow-x-auto">
+      <table class="w-full data-table" id="staffTable">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th
+              class="px-6 py-4 text-left text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+              onclick="sortTable(0)"
+            >
+              <div class="flex items-center gap-2">
+                <span>ID</span>
+                <i class="fas fa-sort text-gray-400 text-xs"></i>
+              </div>
+            </th>
+            <th
+              class="px-6 py-4 text-left text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+              onclick="sortTable(1)"
+            >
+              <div class="flex items-center gap-2">
+                <span>Username</span>
+                <i class="fas fa-sort text-gray-400 text-xs"></i>
+              </div>
+            </th>
+            <th
+              class="px-6 py-4 text-left text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+              onclick="sortTable(2)"
+            >
+              <div class="flex items-center gap-2">
+                <span>Full Name</span>
+                <i class="fas fa-sort text-gray-400 text-xs"></i>
+              </div>
+            </th>
+            <th
+              class="px-6 py-4 text-left text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+              onclick="sortTable(3)"
+            >
+              <div class="flex items-center gap-2">
+                <span>Role</span>
+                <i class="fas fa-sort text-gray-400 text-xs"></i>
+              </div>
+            </th>
+            <th class="px-6 py-4 text-left text-gray-700">Contact</th>
+            <th
+              class="px-6 py-4 text-left text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+              onclick="sortTable(5)"
+            >
+              <div class="flex items-center gap-2">
+                <span>Status</span>
+                <i class="fas fa-sort text-gray-400 text-xs"></i>
+              </div>
+            </th>
+            <th
+              class="px-6 py-4 text-left text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors select-none"
+              onclick="sortTable(6)"
+            >
+              <div class="flex items-center gap-2">
+                <span>Created</span>
+                <i class="fas fa-sort text-gray-400 text-xs"></i>
+              </div>
+            </th>
+            <th class="px-6 py-4 text-center text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100" id="staffTableBody">
+          {% if staff_list %} {% for staff in staff_list %}
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-6 py-4">
+              <span class="font-mono text-sm text-gray-600"
+                >#{{ staff.id }}</span
+              >
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-semibold"
+                >
+                  {{ staff.full_name[0].upper() }}
+                </div>
+                <span class="font-semibold text-gray-900"
+                  >{{ staff.username }}</span
+                >
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <span class="text-gray-900">{{ staff.full_name }}</span>
+            </td>
+            <td class="px-6 py-4">
+              {% if staff.role == 'owner' %}
+              <span
+                class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium"
+              >
+                <i class="fas fa-crown mr-1"></i>Owner
+              </span>
+              {% else %}
+              <span class="badge badge-info">
+                <i class="fas fa-user mr-1"></i>Cashier
+              </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-sm">
+                {% if staff.email %}
+                <div class="text-gray-600">
+                  <i class="fas fa-envelope text-gray-400 mr-1"></i>{{
+                  staff.email }}
+                </div>
+                {% endif %} {% if staff.phone %}
+                <div class="text-gray-600">
+                  <i class="fas fa-phone text-gray-400 mr-1"></i>{{ staff.phone
+                  }}
+                </div>
+                {% endif %} {% if not staff.email and not staff.phone %}
+                <span class="text-gray-400">N/A</span>
+                {% endif %}
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              {% if staff.is_active %}
+              <span class="badge badge-success">
+                <i class="fas fa-check-circle mr-1"></i>Active
+              </span>
+              {% else %}
+              <span
+                class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium"
+              >
+                <i class="fas fa-times-circle mr-1"></i>Inactive
+              </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4">
+              <span class="text-sm text-gray-600">
+                {{ staff.created_at.strftime('%d %b %Y') }}
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex items-center justify-center gap-2">
+                <button
+                  onclick="openEditModal({{ staff.id }}, '{{ staff.full_name }}', '{{ staff.role }}', '{{ staff.email or '' }}', '{{ staff.phone or '' }}', {{ staff.is_active|int }})"
+                  class="badge badge-info"
+                  title="Edit Staff"
+                >
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button
+                  onclick="openPasswordModal({{ staff.id }}, '{{ staff.username }}')"
+                  class="text-orange-600 hover:text-orange-800 hover:bg-orange-50 p-2 rounded-lg transition-colors"
+                  title="Change Password"
+                >
+                  <i class="fas fa-key"></i>
+                </button>
+                {% if staff.id != session.get('user_id') %}
+                <button
+                  onclick="deleteStaff({{ staff.id }}, '{{ staff.username }}')"
+                  class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                  title="Delete Staff"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %} {% else %}
+          <tr>
+            <td colspan="8" class="px-6 py-12 text-center">
+              <div class="flex flex-col items-center gap-3">
+                <i class="fas fa-users text-5xl text-gray-300"></i>
+                <p class="text-gray-500 text-lg">No staff accounts found</p>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add Staff Modal -->
+<div
+  id="addModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+>
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+    <div class="bg-gradient-to-r from-primary to-secondary p-6 rounded-t-2xl">
+      <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+          <i class="fas fa-user-plus"></i>
+          Add New Staff
+        </h2>
+        <button
+          onclick="closeAddModal()"
+          class="text-white hover:text-gray-200 text-2xl"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <form method="POST" action="{{ url_for('add_staff') }}" class="p-6">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Username <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="username"
+            required
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+            placeholder="Enter username"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Password <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="password"
+            name="password"
+            required
+            minlength="4"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+            placeholder="Enter password"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Full Name <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="full_name"
+            required
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+            placeholder="Enter full name"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Role <span class="text-red-500">*</span>
+          </label>
+          <select
+            name="role"
+            required
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+          >
+            <option value="cashier">Cashier</option>
+            <option value="owner">Owner</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2"
+            >Email</label
+          >
+          <input
+            type="email"
+            name="email"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+            placeholder="Enter email (optional)"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2"
+            >Phone</label
+          >
+          <input
+            type="tel"
+            name="phone"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+            placeholder="Enter phone (optional)"
+          />
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        <button
+          type="button"
+          onclick="closeAddModal()"
+          class="flex-1 px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="flex-1 px-6 py-2.5 bg-primary hover:bg-secondary text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all"
+        >
+          <i class="fas fa-plus mr-2"></i>Create Staff
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Staff Modal -->
+<div
+  id="editModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+>
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+    <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-6 rounded-t-2xl">
+      <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+          <i class="fas fa-user-edit"></i>
+          Edit Staff
+        </h2>
+        <button
+          onclick="closeEditModal()"
+          class="text-white hover:text-gray-200 text-2xl"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <form method="POST" id="editForm" class="p-6">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Full Name <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="full_name"
+            id="edit_full_name"
+            required
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Role <span class="text-red-500">*</span>
+          </label>
+          <select
+            name="role"
+            id="edit_role"
+            required
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+          >
+            <option value="cashier">Cashier</option>
+            <option value="owner">Owner</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2"
+            >Email</label
+          >
+          <input
+            type="email"
+            name="email"
+            id="edit_email"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2"
+            >Phone</label
+          >
+          <input
+            type="tel"
+            name="phone"
+            id="edit_phone"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2"
+            >Status</label
+          >
+          <select
+            name="is_active"
+            id="edit_is_active"
+            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+          >
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        <button
+          type="button"
+          onclick="closeEditModal()"
+          class="flex-1 btn-secondary"
+        >
+          Cancel
+        </button>
+        <button type="submit" class="flex-1 btn-primary">
+          <i class="fas fa-save mr-2"></i>Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div
+  id="passwordModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+>
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+    <div class="bg-blue-500 p-6 rounded-t-2xl">
+      <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+          <i class="fas fa-key"></i>
+          Change Password
+        </h2>
+        <button
+          onclick="closePasswordModal()"
+          class="text-white hover:text-gray-200 text-2xl"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <form method="POST" id="passwordForm" class="p-6">
+      <div class="mb-4">
+        <p class="text-gray-600">
+          Changing password for:
+          <span
+            class="font-semibold text-gray-900"
+            id="password_username"
+          ></span>
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">
+          New Password <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="password"
+          name="new_password"
+          required
+          minlength="4"
+          class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+          placeholder="Enter new password"
+        />
+        <p class="text-xs text-gray-500 mt-1">Minimum 4 characters</p>
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        <button
+          type="button"
+          onclick="closePasswordModal()"
+          class="flex-1 btn-secondary"
+        >
+          Cancel
+        </button>
+        <button type="submit" class="flex-1 btn-primary">
+          <i class="fas fa-check mr-2"></i>Change
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Add Staff Modal
+  function openAddModal() {
+    document.getElementById("addModal").classList.remove("hidden");
+  }
+
+  function closeAddModal() {
+    document.getElementById("addModal").classList.add("hidden");
+  }
+
+  // Edit Staff Modal
+  function openEditModal(staffId, fullName, role, email, phone, isActive) {
+    document.getElementById("edit_full_name").value = fullName;
+    document.getElementById("edit_role").value = role;
+    document.getElementById("edit_email").value = email || "";
+    document.getElementById("edit_phone").value = phone || "";
+    document.getElementById("edit_is_active").value = isActive ? "1" : "0";
+
+    document.getElementById("editForm").action = `/staff/edit/${staffId}`;
+    document.getElementById("editModal").classList.remove("hidden");
+  }
+
+  function closeEditModal() {
+    document.getElementById("editModal").classList.add("hidden");
+  }
+
+  // Change Password Modal
+  function openPasswordModal(staffId, username) {
+    document.getElementById("password_username").textContent = username;
+    document.getElementById("passwordForm").action =
+      `/staff/change-password/${staffId}`;
+    document.getElementById("passwordModal").classList.remove("hidden");
+  }
+
+  function closePasswordModal() {
+    document.getElementById("passwordModal").classList.add("hidden");
+  }
+
+  // Delete Staff
+  function deleteStaff(staffId, username) {
+    if (
+      confirm(
+        `Are you sure you want to delete staff account "${username}"?\n\nThis action cannot be undone!`,
+      )
+    ) {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = `/staff/delete/${staffId}`;
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+
+  // Table Sorting Function
+  let sortDirection = {};
+
+  function sortTable(columnIndex) {
+    const table = document.getElementById("staffTable");
+    const tbody = document.getElementById("staffTableBody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+
+    // Skip if no data
+    if (rows.length === 0 || rows[0].cells.length === 1) return;
+
+    // Initialize sort direction for this column
+    if (sortDirection[columnIndex] === undefined) {
+      sortDirection[columnIndex] = "asc";
+    } else {
+      sortDirection[columnIndex] =
+        sortDirection[columnIndex] === "asc" ? "desc" : "asc";
+    }
+
+    const direction = sortDirection[columnIndex];
+    const isAscending = direction === "asc";
+
+    // Sort rows
+    rows.sort((a, b) => {
+      let aValue = a.cells[columnIndex].textContent.trim();
+      let bValue = b.cells[columnIndex].textContent.trim();
+
+      // Handle ID column (numeric)
+      if (columnIndex === 0) {
+        aValue = parseInt(aValue.replace("#", "")) || 0;
+        bValue = parseInt(bValue.replace("#", "")) || 0;
+      }
+      // Handle date column
+      else if (columnIndex === 6) {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      }
+      // Handle role column (extract text only)
+      else if (columnIndex === 3) {
+        aValue = aValue.toLowerCase().replace(/[^a-z]/g, "");
+        bValue = bValue.toLowerCase().replace(/[^a-z]/g, "");
+      }
+      // Handle status column (extract text only)
+      else if (columnIndex === 5) {
+        aValue = aValue.toLowerCase().replace(/[^a-z]/g, "");
+        bValue = bValue.toLowerCase().replace(/[^a-z]/g, "");
+      }
+
+      // Compare values
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return isAscending ? aValue - bValue : bValue - aValue;
+      } else if (aValue instanceof Date && bValue instanceof Date) {
+        return isAscending ? aValue - bValue : bValue - aValue;
+      } else {
+        aValue = String(aValue).toLowerCase();
+        bValue = String(bValue).toLowerCase();
+        if (aValue < bValue) return isAscending ? -1 : 1;
+        if (aValue > bValue) return isAscending ? 1 : -1;
+        return 0;
+      }
+    });
+
+    // Clear and re-append sorted rows
+    tbody.innerHTML = "";
+    rows.forEach((row) => tbody.appendChild(row));
+
+    // Update sort icons
+    updateSortIcons(columnIndex, direction);
+  }
+
+  function updateSortIcons(activeColumn, direction) {
+    const headers = document.querySelectorAll("#staffTable thead th");
+    headers.forEach((header, index) => {
+      const icon = header.querySelector("i");
+      if (icon) {
+        if (index === activeColumn) {
+          icon.className =
+            direction === "asc"
+              ? "fas fa-sort-up text-primary text-xs"
+              : "fas fa-sort-down text-primary text-xs";
+        } else {
+          icon.className = "fas fa-sort text-gray-400 text-xs";
+        }
+      }
+    });
+  }
+
+  // Close modals on Escape key
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      closeAddModal();
+      closeEditModal();
+      closePasswordModal();
+    }
+  });
+
+  // Close modals when clicking outside
+  document
+    .querySelectorAll("#addModal, #editModal, #passwordModal")
+    .forEach((modal) => {
+      modal.addEventListener("click", function (e) {
+        if (e.target === this) {
+          closeAddModal();
+          closeEditModal();
+          closePasswordModal();
+        }
+      });
+    });
+</script>
+{% endblock %}

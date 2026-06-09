@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Invoice #{{ bill.bill_number }} - {{ settings.get('store_name', 'MediStore
+      Pro') }}
+    </title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+      * {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      /* Optimize for single page printing */
+      html,
+      body {
+        height: auto;
+        overflow: visible;
+      }
+
+      @media print {
+        html,
+        body {
+          height: auto;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: white !important;
+          overflow: visible !important;
+        }
+
+        .print\\:hidden {
+          display: none !important;
+        }
+
+        .no-print {
+          display: none !important;
+        }
+
+        @page {
+          margin: 0.5cm;
+          size: A4 portrait;
+        }
+
+        /* Prevent page breaks inside important sections */
+        .invoice-container,
+        .invoice-header,
+        .invoice-items,
+        .invoice-totals {
+          page-break-inside: avoid !important;
+        }
+
+        /* Allow breaks between sections if needed */
+        .break-allowed {
+          page-break-inside: auto;
+        }
+
+        table,
+        tr,
+        td,
+        th {
+          page-break-inside: avoid;
+        }
+
+        .invoice-container {
+          box-shadow: none !important;
+          border: none !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          max-width: 100% !important;
+        }
+
+        /* Compact spacing for print */
+        .print-compact {
+          padding: 0.4cm !important;
+        }
+
+        .print-compact-sm {
+          padding: 0.3cm !important;
+        }
+
+        .print-compact-xs {
+          padding: 0.2cm !important;
+        }
+
+        /* Scale down if needed to fit */
+        .max-w-4xl {
+          max-width: 100% !important;
+        }
+      }
+
+      /* Thermal & Receipt Printer Support */
+      @media print and (max-width: 80mm) {
+        @page {
+          margin: 0.2cm;
+          size: 80mm auto;
+        }
+
+        body {
+          font-size: 10px;
+        }
+
+        .invoice-header h1 {
+          font-size: 14px !important;
+        }
+      }
+
+      .invoice-table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      .invoice-table th {
+        background-color: #f8fafc;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 10px;
+        letter-spacing: 0.3px;
+        padding: 8px 10px;
+        text-align: left;
+        border-bottom: 2px solid #000;
+      }
+
+      .invoice-table td {
+        padding: 6px 10px;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 11px;
+      }
+
+      .invoice-table tbody tr:last-child td {
+        border-bottom: 2px solid #000;
+      }
+    </style>
+    <script>
+      // Auto-print when print parameter is present
+      window.addEventListener("load", function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("print") === "1") {
+          setTimeout(function () {
+            window.print();
+          }, 500);
+        }
+      });
+    </script>
+  </head>
+  <body class="bg-gray-100 print:bg-white">
+    <div class="max-w-4xl mx-auto">
+      <div
+        class="invoice-container bg-white rounded-md border border-gray-200 print:shadow-none print:border-0"
+      >
+        <!-- Invoice Header -->
+        <div class="invoice-header p-6 print-compact border-b-2 border-black">
+          <div class="flex justify-between items-start">
+            <!-- Company Details -->
+            <div>
+              <div class="flex items-center gap-2 mb-2">
+                <div
+                  class="w-10 h-10 border-2 border-black rounded flex items-center justify-center"
+                >
+                  <i class="fas fa-pills text-black text-lg"></i>
+                </div>
+                <div>
+                  <h1 class="text-xl font-bold text-black">
+                    {{ settings.get('store_name', 'MediStore Pro') }}
+                  </h1>
+                  <p class="text-black text-xs">Medical Store & Pharmacy</p>
+                </div>
+              </div>
+              <div class="text-black text-xs space-y-0.5">
+                {% set address_lines = settings.get('store_address', '123
+                Medical Street, Healthcare District, City, State -
+                400001').split(',') %} {% for line in address_lines %}
+                <p>{{ line.strip() }}</p>
+                {% endfor %}
+                <p>
+                  Phone: {{ settings.get('store_phone', '+91 98765 43210') }}
+                </p>
+                <p>
+                  Email: {{ settings.get('store_email', 'info@medistorepro.com')
+                  }}
+                </p>
+                <p class="font-bold mt-1">
+                  GSTIN: {{ settings.get('store_gstin', '27AABCU9603R1ZM') }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Invoice Details -->
+            <div class="text-right">
+              <div
+                class="inline-block border-2 border-black px-3 py-1.5 rounded mb-2"
+              >
+                <h2 class="text-base font-bold text-black">INVOICE</h2>
+              </div>
+              <div class="space-y-0.5 text-xs">
+                <div>
+                  <span class="text-black">Invoice No:</span>
+                  <span class="font-bold text-black ml-1"
+                    >{{ bill.bill_number }}</span
+                  >
+                </div>
+                <div>
+                  <span class="text-black">Date:</span>
+                  <span class="font-bold text-black ml-1"
+                    >{{ bill.bill_date.strftime('%d %b %Y') }}</span
+                  >
+                </div>
+                <div>
+                  <span class="text-black">Time:</span>
+                  <span class="font-bold text-black ml-1"
+                    >{{ bill.bill_date.strftime('%I:%M %p') }}</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Details -->
+        <div class="p-5 print-compact-sm border-b border-black">
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <h4
+                class="text-xs font-bold text-black uppercase mb-2 border-b border-black pb-1"
+              >
+                Bill To:
+              </h4>
+              <div class="space-y-0.5">
+                <p class="text-sm font-bold text-black">
+                  {{ bill.customer_name }}
+                </p>
+                {% if bill.phone %}
+                <p class="text-xs text-black">
+                  <i class="fas fa-phone text-xs mr-1"></i>{{ bill.phone }}
+                </p>
+                {% endif %} {% if bill.email %}
+                <p class="text-xs text-black">
+                  <i class="fas fa-envelope text-xs mr-1"></i>{{ bill.email }}
+                </p>
+                {% endif %} {% if bill.address %}
+                <p class="text-xs text-black">
+                  <i class="fas fa-map-marker-alt text-xs mr-1"></i>{{
+                  bill.address }}
+                </p>
+                {% endif %}
+              </div>
+            </div>
+            <div class="text-right">
+              <h4
+                class="text-xs font-bold text-black uppercase mb-2 border-b border-black pb-1"
+              >
+                Payment Details:
+              </h4>
+              <div class="space-y-1">
+                <div>
+                  <span class="text-xs text-black">Payment Mode:</span>
+                  <span class="block font-bold text-black text-xs uppercase">
+                    {% if bill.payment_method == 'upi' %} UPI {% else %} Cash {%
+                    endif %}
+                  </span>
+                </div>
+                <div>
+                  <span class="text-xs text-black">Status:</span>
+                  <span class="block"
+                    ><span
+                      class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border {% if bill.payment_status == 'completed' %} border-green-600 text-green-700 bg-green-50 {% elif bill.payment_status == 'pending' %} border-yellow-600 text-yellow-700 bg-yellow-50 {% else %} border-black text-black {% endif %}"
+                    >
+                      {% if bill.payment_status == 'completed' %} PAID {% elif
+                      bill.payment_status == 'pending' %} PENDING {% else %}
+                      PAID {% endif %}
+                    </span></span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="invoice-items p-5 print-compact-sm">
+          <h3 class="text-xs font-bold text-gray-900 mb-2 uppercase">Items</h3>
+          <table class="w-full border border-black">
+            <thead>
+              <tr class="border-b-2 border-black">
+                <th
+                  class="text-left py-2 px-2 text-xs font-bold text-black uppercase border-r border-black"
+                  style="width: 5%"
+                >
+                  #
+                </th>
+                <th
+                  class="text-left py-2 px-2 text-xs font-bold text-black uppercase border-r border-black"
+                  style="width: 50%"
+                >
+                  Item Description
+                </th>
+                <th
+                  class="text-center py-2 px-2 text-xs font-bold text-black uppercase border-r border-black"
+                  style="width: 10%"
+                >
+                  Qty
+                </th>
+                <th
+                  class="text-right py-2 px-2 text-xs font-bold text-black uppercase border-r border-black"
+                  style="width: 17.5%"
+                >
+                  Price
+                </th>
+                <th
+                  class="text-right py-2 px-2 text-xs font-bold text-black uppercase"
+                  style="width: 17.5%"
+                >
+                  Amount
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in bill_items %}
+              <tr class="border-b border-black">
+                <td class="py-2 px-2 text-black text-xs border-r border-black">
+                  {{ loop.index }}
+                </td>
+                <td
+                  class="py-2 px-2 text-black font-medium text-xs border-r border-black"
+                >
+                  {{ item.medicine_name }}
+                </td>
+                <td
+                  class="py-2 px-2 text-center text-black text-xs font-medium border-r border-black"
+                >
+                  {{ item.quantity }}
+                </td>
+                <td
+                  class="py-2 px-2 text-right text-black text-xs border-r border-black"
+                >
+                  ₹{{ "%.2f"|format(item.price|float) }}
+                </td>
+                <td class="py-2 px-2 text-right text-black font-bold text-xs">
+                  ₹{{ "%.2f"|format(item.total_amount|float) }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Totals -->
+        <div class="invoice-totals px-5 pb-5 print-compact-sm">
+          <div class="max-w-xs ml-auto">
+            <div class="border-2 border-black rounded p-3">
+              <div class="space-y-1.5">
+                <div class="flex justify-between text-black text-xs">
+                  <span>Subtotal:</span>
+                  <span class="font-bold"
+                    >₹{{ "%.2f"|format(bill.subtotal|float) }}</span
+                  >
+                </div>
+                <div class="flex justify-between text-black text-xs">
+                  <span>GST ({{ settings.get('gst_rate', '12.0') }}%):</span>
+                  <span class="font-bold"
+                    >₹{{ "%.2f"|format(bill.gst|float) }}</span
+                  >
+                </div>
+                <div
+                  class="flex justify-between items-center text-sm font-bold text-black pt-2 border-t-2 border-black"
+                >
+                  <span>Grand Total:</span>
+                  <span class="text-lg font-black"
+                    >₹{{ "%.2f"|format(bill.total_amount|float) }}</span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="mt-2 text-right">
+              <p class="text-xs text-black italic">Amount in words:</p>
+              <p class="text-xs font-bold text-black" id="amountInWords">
+                Rupees {{ "%.2f"|format(bill.total_amount|float) }} Only
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Notes -->
+        <div class="border-t-2 border-black">
+          <div class="p-4 print-compact-xs">
+            <div class="grid grid-cols-2 gap-6">
+              <div>
+                <h4 class="text-xs font-bold text-black uppercase mb-1.5">
+                  Terms & Conditions:
+                </h4>
+                <ul class="text-xs text-black space-y-0.5">
+                  <li>• Goods once sold cannot be returned</li>
+                  <li>• Please check medicines before leaving</li>
+                  <li>• Keep this invoice for warranty claims</li>
+                </ul>
+              </div>
+              <div class="text-right">
+                <div class="mt-6">
+                  <div class="border-t-2 border-black w-40 ml-auto mb-1"></div>
+                  <p class="text-xs font-bold text-black">
+                    Authorized Signature
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="text-center mt-4 pt-3 border-t border-black">
+              <p class="text-xs font-bold text-black mb-0.5">
+                Thank you for your purchase!
+              </p>
+              <p class="text-xs text-black">
+                This is a computer-generated invoice.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div
+          class="flex gap-3 p-6 bg-gray-50 border-t border-gray-200 print:hidden"
+        >
+          <button
+            onclick="window.print()"
+            class="flex-1 btn-primary flex items-center justify-center gap-2"
+          >
+            <i class="fas fa-print"></i> Print Invoice
+          </button>
+          <a
+            href="{{ url_for('billing') }}"
+            class="flex-1 btn-secondary flex items-center justify-center gap-2"
+          >
+            <i class="fas fa-arrow-left"></i> Back to Billing
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Convert number to words (Indian Rupees)
+      function numberToWords(num) {
+        if (num === 0) return 'Zero';
+
+        const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+        const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+        function convertLessThan100(n) {
+          if (n < 10) return ones[n];
+          if (n < 20) return teens[n - 10];
+          return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + ones[n % 10] : '');
+        }
+
+        function convertLessThan1000(n) {
+          if (n < 100) return convertLessThan100(n);
+          return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + convertLessThan100(n % 100) : '');
+        }
+
+        if (num < 1000) return convertLessThan1000(num);
+        if (num < 100000) {
+          const thousands = Math.floor(num / 1000);
+          const remainder = num % 1000;
+          return convertLessThan100(thousands) + ' Thousand' + (remainder !== 0 ? ' ' + convertLessThan1000(remainder) : '');
+        }
+        if (num < 10000000) {
+          const lakhs = Math.floor(num / 100000);
+          const remainder = num % 100000;
+          return convertLessThan100(lakhs) + ' Lakh' + (remainder !== 0 ? ' ' + numberToWords(remainder) : '');
+        }
+        const crores = Math.floor(num / 10000000);
+        const remainder = num % 10000000;
+        return convertLessThan100(crores) + ' Crore' + (remainder !== 0 ? ' ' + numberToWords(remainder) : '');
+      }
+
+      // Convert amount to words with paise
+      function amountToWords(amount) {
+        const parts = amount.toFixed(2).split('.');
+        const rupees = parseInt(parts[0]);
+        const paise = parseInt(parts[1]);
+
+        let words = 'Rupees ';
+
+        if (rupees === 0) {
+          words += 'Zero';
+        } else {
+          words += numberToWords(rupees);
+        }
+
+        if (paise > 0) {
+          words += ' and ' + numberToWords(paise) + ' Paise';
+        }
+
+        words += ' Only';
+        return words;
+      }
+
+      // Set amount in words on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        const totalAmount = {{ bill.total_amount|float }};
+        const amountInWordsElement = document.getElementById('amountInWords');
+        if (amountInWordsElement) {
+          amountInWordsElement.textContent = amountToWords(totalAmount);
+        }
+      });
+    </script>
+  </body>
+</html>

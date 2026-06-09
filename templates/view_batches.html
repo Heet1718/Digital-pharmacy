@@ -1,0 +1,148 @@
+{% extends "base.html" %} {% block title %}Batches - {{ product.name }} -
+MediStore Pro{% endblock %} {% block content %}
+
+<div class="section-spacing">
+  <h1 class="page-title">Product Batches</h1>
+  <p class="page-subtitle">{{ product.name }} - {{ product.manufacturer }}</p>
+</div>
+
+<div class="card mb-6">
+  <div class="card-header flex justify-between items-center">
+    <div>
+      <h3 class="text-lg font-semibold">{{ product.name }}</h3>
+      <p class="text-sm text-gray-600">
+        Total Stock:
+        <span class="font-bold text-indigo-600">{{ total_stock }}</span> units |
+        Price: ₹{{ product.price }}
+      </p>
+    </div>
+    <div class="flex gap-3">
+      <a
+        href="{{ url_for('add_batch', product_id=product.id) }}"
+        class="btn btn-primary"
+      >
+        <i class="fas fa-plus"></i> Add New Batch
+      </a>
+      <a href="{{ url_for('inventory') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Inventory
+      </a>
+    </div>
+  </div>
+</div>
+
+{% if batches %}
+<div class="card">
+  <div class="card-body">
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Batch Number</th>
+            <th>Quantity</th>
+            <th>Expiry Date</th>
+            <th>Days Until Expiry</th>
+            <th>Status</th>
+            <th>Shelf Location</th>
+            <th>Cost Price</th>
+            <th>Supplier</th>
+            <th>Purchase Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for batch in batches %}
+          <tr>
+            <td class="font-semibold">{{ batch.batch_number }}</td>
+            <td>{{ batch.quantity }} units</td>
+            <td>
+              {% if batch.expiry_date %} {{
+              batch.expiry_date.strftime('%Y-%m-%d') }} {% else %}
+              <span class="text-gray-400">No expiry</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if batch.days_until_expiry != None %} {% if
+              batch.days_until_expiry < 0 %}
+              <span class="text-red-600">Expired</span>
+              {% else %} {{ batch.days_until_expiry }} days {% endif %} {% else
+              %}
+              <span class="text-gray-400">-</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if batch.status == 'expired' %}
+              <span class="badge badge-danger">Expired</span>
+              {% elif batch.status == 'urgent' %}
+              <span class="badge badge-warning">Urgent (&lt;30d)</span>
+              {% elif batch.status == 'warning' %}
+              <span class="badge badge-info">Warning (&lt;90d)</span>
+              {% else %}
+              <span class="badge badge-success">Good</span>
+              {% endif %}
+            </td>
+            <td>{{ batch.shelf_location or '-' }}</td>
+            <td>
+              {% if batch.cost_price %} ₹{{ "%.2f"|format(batch.cost_price) }}
+              {% else %}
+              <span class="text-gray-400">-</span>
+              {% endif %}
+            </td>
+            <td>{{ batch.supplier_name or '-' }}</td>
+            <td>
+              {% if batch.purchase_date %} {{
+              batch.purchase_date.strftime('%Y-%m-%d') }} {% else %}
+              <span class="text-gray-400">-</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="flex gap-2">
+                <a
+                  href="{{ url_for('edit_batch', batch_id=batch.id) }}"
+                  class="btn-icon btn-primary"
+                  title="Edit Batch"
+                >
+                  <i class="fas fa-edit"></i>
+                </a>
+                {% if batch.quantity == 0 %}
+                <form
+                  method="POST"
+                  action="{{ url_for('delete_batch', batch_id=batch.id) }}"
+                  onsubmit="return confirm('Delete this batch?');"
+                  class="inline"
+                >
+                  <button
+                    type="submit"
+                    class="btn-icon btn-danger"
+                    title="Delete Batch"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body text-center py-12">
+    <i class="fas fa-box-open text-6xl text-gray-300 mb-4"></i>
+    <h3 class="text-xl font-semibold text-gray-700 mb-2">No Batches Yet</h3>
+    <p class="text-gray-600 mb-4">
+      This product has no stock batches. Add your first batch to start tracking
+      inventory.
+    </p>
+    <a
+      href="{{ url_for('add_batch', product_id=product.id) }}"
+      class="btn btn-primary"
+    >
+      <i class="fas fa-plus"></i> Add First Batch
+    </a>
+  </div>
+</div>
+{% endif %} {% endblock %}

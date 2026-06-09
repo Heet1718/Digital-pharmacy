@@ -1,0 +1,321 @@
+{% extends "base.html" %} {% block title %}Store Settings - MediStore Pro{%
+endblock %} {% block content %}
+<div class="p-6">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold text-gray-900">Store Settings</h1>
+      <p class="text-sm text-gray-600 mt-1">
+        Manage your store configuration and preferences
+      </p>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div
+    class="mb-4 p-4 rounded-md {% if category == 'success' %}bg-green-50 text-green-800 border border-green-200{% else %}bg-red-50 text-red-800 border border-red-200{% endif %}"
+  >
+    <div class="flex items-center gap-2">
+      <i
+        class="fas {% if category == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"
+      ></i>
+      <span class="text-sm font-medium">{{ message }}</span>
+    </div>
+  </div>
+  {% endfor %} {% endif %} {% endwith %}
+
+  <div class="grid gap-6">
+    <!-- Settings Form -->
+    <div class="bg-white border border-gray-200 rounded-md">
+      <div class="border-b border-gray-200 px-5 py-3.5">
+        <h2 class="text-base font-semibold text-gray-900">Configuration</h2>
+      </div>
+
+      <div class="p-6">
+        <form
+          method="POST"
+          action="{{ url_for('settings') }}"
+          class="space-y-6"
+        >
+          <!-- Store Information Section -->
+          <div>
+            <h3
+              class="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200"
+            >
+              Store Information
+            </h3>
+            <div class="grid grid-cols-2 gap-4">
+              {% for setting in settings %} {% if setting.setting_key in
+              ['store_name', 'store_address', 'store_phone', 'store_email',
+              'store_gstin'] %}
+              <div
+                class="{% if setting.setting_key == 'store_address' %}col-span-2{% endif %}"
+              >
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                  {{ setting.setting_label }} {% if setting.setting_key ==
+                  'gst_rate' or setting.setting_key == 'low_stock_threshold' %}
+                  <span class="text-danger">*</span>
+                  {% endif %}
+                </label>
+                {% if setting.setting_description %}
+                <p class="text-xs text-gray-500 mb-2">
+                  {{ setting.setting_description }}
+                </p>
+                {% endif %} {% if setting.setting_type == 'address' %}
+                <textarea
+                  name="{{ setting.setting_key }}"
+                  rows="2"
+                  class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-primary focus:border-primary"
+                  {%
+                  if
+                  not
+                  setting.is_editable
+                  %}readonly{%
+                  endif
+                  %}
+                  required
+                >
+{{ setting.setting_value }}</textarea
+                >
+                {% else %}
+                <input
+                  type="{% if setting.setting_type == 'email' %}email{% elif setting.setting_type in ['number', 'percentage'] %}number{% else %}text{% endif %}"
+                  name="{{ setting.setting_key }}"
+                  value="{{ setting.setting_value }}"
+                  {%
+                  if
+                  setting.setting_type
+                  in
+                  ['number', 'percentage']
+                  %}step="0.01"
+                  min="0"
+                  {%
+                  endif
+                  %}
+                  class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-primary focus:border-primary"
+                  {%
+                  if
+                  not
+                  setting.is_editable
+                  %}readonly{%
+                  endif
+                  %}
+                  required
+                />
+                {% endif %}
+              </div>
+              {% endif %} {% endfor %}
+            </div>
+          </div>
+
+          <!-- Tax & Financial Settings -->
+          <div>
+            <h3
+              class="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200"
+            >
+              Tax & Financial Settings
+            </h3>
+            <div class="grid grid-cols-2 gap-4">
+              {% for setting in settings %} {% if setting.setting_key in
+              ['gst_rate', 'currency_symbol', 'invoice_prefix'] %}
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                  {{ setting.setting_label }} {% if setting.setting_key ==
+                  'gst_rate' %}
+                  <span class="text-danger">*</span>
+                  {% endif %}
+                </label>
+                {% if setting.setting_description %}
+                <p class="text-xs text-gray-500 mb-2">
+                  {{ setting.setting_description }}
+                </p>
+                {% endif %}
+
+                <input
+                  type="{% if setting.setting_type in ['number', 'percentage'] %}number{% else %}text{% endif %}"
+                  name="{{ setting.setting_key }}"
+                  value="{{ setting.setting_value }}"
+                  {%
+                  if
+                  setting.setting_type
+                  in
+                  ['number', 'percentage']
+                  %}step="0.01"
+                  min="0"
+                  max="100"
+                  {%
+                  endif
+                  %}
+                  class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-primary focus:border-primary"
+                  {%
+                  if
+                  not
+                  setting.is_editable
+                  %}readonly{%
+                  endif
+                  %}
+                  required
+                />
+              </div>
+              {% endif %} {% endfor %}
+            </div>
+          </div>
+
+          <!-- Payment Settings -->
+          <div>
+            <h3
+              class="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200"
+            >
+              Payment Settings
+            </h3>
+            <div class="grid grid-cols-2 gap-4">
+              {% for setting in settings %} {% if setting.setting_key in
+              ['upi_id'] %}
+              <div class="col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                  <i class="fas fa-qrcode text-blue-600 mr-1"></i>
+                  {{ setting.setting_label }}
+                </label>
+                {% if setting.setting_description %}
+                <p class="text-xs text-gray-500 mb-2">
+                  {{ setting.setting_description }}
+                </p>
+                {% endif %}
+
+                <input
+                  type="text"
+                  name="{{ setting.setting_key }}"
+                  value="{{ setting.setting_value }}"
+                  placeholder="yourstore@paytm or yourstore@ybl"
+                  class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-primary focus:border-primary"
+                  {%
+                  if
+                  not
+                  setting.is_editable
+                  %}readonly{%
+                  endif
+                  %}
+                />
+                <p class="text-xs text-gray-500 mt-1">
+                  <i class="fas fa-info-circle mr-1"></i>
+                  This UPI ID will be used to generate QR codes for UPI
+                  payments. Example: yourstore@paytm, yourstore@ybl,
+                  yourstore@okaxis
+                </p>
+              </div>
+              {% endif %} {% endfor %}
+            </div>
+          </div>
+
+          <!-- System Settings -->
+          <div>
+            <h3
+              class="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200"
+            >
+              System Settings
+            </h3>
+            <div class="grid grid-cols-2 gap-4">
+              {% for setting in settings %} {% if setting.setting_key in
+              ['low_stock_threshold', 'items_per_page'] %}
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">
+                  {{ setting.setting_label }} {% if setting.setting_key ==
+                  'low_stock_threshold' %}
+                  <span class="text-danger">*</span>
+                  {% endif %}
+                </label>
+                {% if setting.setting_description %}
+                <p class="text-xs text-gray-500 mb-2">
+                  {{ setting.setting_description }}
+                </p>
+                {% endif %}
+
+                <input
+                  type="number"
+                  name="{{ setting.setting_key }}"
+                  value="{{ setting.setting_value }}"
+                  step="1"
+                  min="1"
+                  class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-primary focus:border-primary"
+                  {%
+                  if
+                  not
+                  setting.is_editable
+                  %}readonly{%
+                  endif
+                  %}
+                  required
+                />
+              </div>
+              {% endif %} {% endfor %}
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex gap-3 pt-4 border-t border-gray-200">
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-save mr-2"></i>
+              Save Settings
+            </button>
+            <button type="reset" class="btn-secondary">
+              <i class="fas fa-undo mr-2"></i>
+              Reset
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Information Cards -->
+    <div class="grid grid-cols-3 gap-4">
+      <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 bg-primary rounded flex items-center justify-center"
+          >
+            <i class="fas fa-info-circle text-white"></i>
+          </div>
+          <div>
+            <p class="text-xs text-blue-700 font-medium">Important</p>
+            <p class="text-xs text-blue-600 mt-0.5">
+              Changes take effect immediately after saving
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-amber-50 border border-amber-200 rounded-md p-4">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 bg-warning rounded flex items-center justify-center"
+          >
+            <i class="fas fa-exclamation-triangle text-white"></i>
+          </div>
+          <div>
+            <p class="text-xs text-amber-700 font-medium">GST Rate</p>
+            <p class="text-xs text-amber-600 mt-0.5">
+              Will apply to all new transactions
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-green-50 border border-green-200 rounded-md p-4">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 bg-success rounded flex items-center justify-center"
+          >
+            <i class="fas fa-shield-alt text-white"></i>
+          </div>
+          <div>
+            <p class="text-xs text-green-700 font-medium">Secure</p>
+            <p class="text-xs text-green-600 mt-0.5">
+              All settings are stored securely
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

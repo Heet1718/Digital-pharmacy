@@ -1,0 +1,593 @@
+{% extends "base.html" %} {% block title %}Billing - MediStore Pro{% endblock %}
+{% block content %}
+<div class="section-spacing">
+  <h1 class="page-title">Billing System</h1>
+  <p class="page-subtitle">
+    Quick billing interface - Search and add items to cart
+  </p>
+</div>
+
+<!-- Keyboard Shortcuts Help Banner -->
+<div class="card section-spacing bg-blue-50 border-blue-200">
+  <div class="card-body">
+    <div class="flex items-start gap-3">
+      <i class="fas fa-keyboard text-blue-600 text-lg mt-0.5"></i>
+      <div class="flex-1">
+        <p class="text-sm font-medium text-blue-900 mb-1">
+          Quick Keyboard Shortcuts
+        </p>
+        <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-blue-700">
+          <span
+            ><kbd
+              class="px-2 py-0.5 bg-white border border-blue-300 rounded font-mono"
+              >F2</kbd
+            >
+            Search Medicine</span
+          >
+          <span
+            ><kbd
+              class="px-2 py-0.5 bg-white border border-blue-300 rounded font-mono"
+              >F3</kbd
+            >
+            Clear Search</span
+          >
+          <span
+            ><kbd
+              class="px-2 py-0.5 bg-white border border-blue-300 rounded font-mono"
+              >F9</kbd
+            >
+            Checkout</span
+          >
+          <span
+            ><kbd
+              class="px-2 py-0.5 bg-white border border-blue-300 rounded font-mono"
+              >ESC</kbd
+            >
+            Clear Field</span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Search Section -->
+  <div class="lg:col-span-2">
+    <div class="card section-spacing">
+      <div class="card-body bg-primary text-white">
+        <h3 class="font-semibold flex items-center gap-2">
+          <i class="fas fa-search"></i> Search & Add Medicines
+        </h3>
+      </div>
+      <div class="card-body">
+        <form
+          method="POST"
+          action="{{ url_for('search_medicine') }}"
+          id="searchForm"
+        >
+          <div class="mb-3">
+            <label for="medicineSearchInput" class="form-label">
+              <i class="fas fa-pills text-primary mr-1"></i> Enter Medicine
+              Name, Manufacturer, or Category
+            </label>
+            <div class="flex gap-3">
+              <div class="flex-1 relative">
+                <input
+                  type="text"
+                  name="search"
+                  id="medicineSearchInput"
+                  placeholder="Type here to search... (Press Enter to search)"
+                  class="form-input pr-10"
+                  autocomplete="off"
+                  list="medicineNames"
+                  autofocus
+                />
+                <datalist id="medicineNames"></datalist>
+                <div
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                >
+                  <i class="fas fa-search"></i>
+                </div>
+              </div>
+              <button type="submit" class="btn-primary" title="Search (F2)">
+                <i class="fas fa-search mr-2"></i> Search
+              </button>
+              <button
+                type="button"
+                onclick="clearBtnFunction()"
+                class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-5 py-2.5 rounded-md transition-colors font-medium"
+                title="Clear (F3)"
+              >
+                <i class="fas fa-times mr-2"></i> Clear
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">
+              <i class="fas fa-info-circle mr-1"></i>
+              Start typing to see suggestions. Press <strong>Enter</strong> or
+              click Search button.
+            </p>
+          </div>
+        </form>
+
+        <!-- Search Results -->
+        {% if search_results %}
+        <div class="mt-6 border-t pt-5">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-base font-semibold text-gray-800">
+              <i class="fas fa-list-ul text-primary mr-2"></i>
+              <span class="text-primary font-bold"
+                >{{ search_results|length }}</span
+              >
+              {% if search_results|length == 1 %}Product{% else %}Products{%
+              endif %} Found
+            </h4>
+            <span class="text-xs text-gray-500">Showing all results</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for product in search_results %}
+            <div
+              class="border-2 border-gray-200 rounded-lg p-4 hover:border-primary hover:shadow-md transition-all bg-white"
+            >
+              <div class="flex justify-between items-start mb-3">
+                <div class="flex-1">
+                  <h5 class="text-sm font-bold text-gray-900 mb-1">
+                    {{ product.name }}
+                  </h5>
+                  <p class="text-xs text-gray-600">
+                    <i class="fas fa-industry text-gray-400 mr-1"></i>{{
+                    product.manufacturer }}
+                  </p>
+                </div>
+                <span
+                  class="badge {% if product.stock_quantity > 50 %}badge-success{% elif product.stock_quantity > 20 %}badge-warning{% else %}badge-danger{% endif %}"
+                >
+                  <i class="fas fa-boxes mr-1"></i>{{ product.stock_quantity }}
+                </span>
+              </div>
+              <div class="mb-3 py-2 border-t border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-500">Price</span>
+                  <p class="text-xl font-bold text-primary">
+                    ₹{{ "%.2f"|format(product.price|float) }}
+                  </p>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">
+                  <i class="fas fa-map-marker-alt text-gray-400 mr-1"></i>{{
+                  product.shelf_location }}
+                </p>
+              </div>
+
+              <!-- Available Batches -->
+              {% if product.batches and product.batches|length > 0 %}
+              <div class="mb-3">
+                <p class="text-xs font-semibold text-gray-700 mb-2">
+                  <i class="fas fa-layer-group text-primary mr-1"></i>
+                  Available Batches ({{ product.batches|length }})
+                </p>
+                <div class="space-y-1 max-h-32 overflow-y-auto">
+                  {% for batch in product.batches %}
+                  <div
+                    class="flex items-center justify-between p-2 bg-gray-50 rounded text-xs border border-gray-200"
+                  >
+                    <div class="flex-1">
+                      <span class="font-mono font-semibold text-gray-900"
+                        >{{ batch.batch_number }}</span
+                      >
+                      <span class="text-gray-500 mx-1">•</span>
+                      <span
+                        class="{% if batch.status == 'expired' %}text-red-600{% elif batch.status == 'urgent' %}text-orange-600{% elif batch.status == 'warning' %}text-yellow-600{% else %}text-green-600{% endif %}"
+                      >
+                        Exp: {{ batch.expiry_date if batch.expiry_date else
+                        'N/A' }}
+                      </span>
+                    </div>
+                    <span
+                      class="badge {% if batch.quantity > 50 %}badge-success{% elif batch.quantity > 10 %}badge-warning{% else %}badge-danger{% endif %} text-xs py-0.5 px-2"
+                    >
+                      {{ batch.quantity }}
+                    </span>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+
+              <form
+                method="POST"
+                action="{{ url_for('add_to_cart') }}"
+                class="flex gap-2 items-center"
+              >
+                <input
+                  type="hidden"
+                  name="product_id"
+                  value="{{ product.id }}"
+                />
+
+                <!-- Batch Selection -->
+                {% if product.batches and product.batches|length > 0 %}
+                <div class="flex-1">
+                  <label class="text-xs font-medium text-gray-600 block mb-1"
+                    >Batch:</label
+                  >
+                  <select
+                    name="batch_id"
+                    class="w-full px-2 py-1.5 border-2 border-gray-300 rounded-md text-xs focus:ring-2 focus:ring-primary focus:border-primary"
+                    onchange="updateMaxQuantity(this, '{{ product.id }}')"
+                    required
+                  >
+                    <option value="">Select Batch</option>
+                    {% set first_valid_batch = namespace(found=false,
+                    quantity=product.stock_quantity) %} {% for batch in
+                    product.batches %} {% if batch.status != 'expired' %}
+                    <option
+                      value="{{ batch.batch_id }}"
+                      data-max="{{ batch.quantity }}"
+                      {%
+                      if
+                      not
+                      first_valid_batch.found
+                      %}selected{%
+                      set
+                      first_valid_batch.found="true"
+                      %}{%
+                      set
+                      first_valid_batch.quantity="batch.quantity"
+                      %}{%
+                      endif
+                      %}
+                    >
+                      {{ batch.batch_number }} ({{ batch.quantity }} avl, Exp:
+                      {% if batch.expiry_date %}{{ batch.expiry_date[5:7] }}/{{
+                      batch.expiry_date[2:4] }}{% else %}N/A{% endif %})
+                    </option>
+                    {% endif %} {% endfor %}
+                  </select>
+                </div>
+                {% set max_quantity = first_valid_batch.quantity %} {% else %}
+                {% set max_quantity = product.stock_quantity %} {% endif %}
+
+                <div>
+                  <label class="text-xs font-medium text-gray-600 block mb-1"
+                    >Qty:</label
+                  >
+                  <input
+                    type="number"
+                    name="quantity"
+                    id="qty_{{ product.id }}"
+                    value="1"
+                    min="1"
+                    max="{{ max_quantity }}"
+                    class="w-16 px-2 py-1.5 border-2 border-gray-300 rounded-md text-center text-sm font-bold focus:ring-2 focus:ring-primary focus:border-primary"
+                  />
+                </div>
+                <div class="self-end">
+                  <button type="submit" class="btn-success py-2 px-4">
+                    <i class="fas fa-cart-plus mr-1"></i> Add
+                  </button>
+                </div>
+              </form>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% elif request.method == 'POST' %}
+        <!-- No results found after search -->
+        <div
+          class="mt-6 text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300"
+        >
+          <i class="fas fa-search text-gray-300 text-5xl mb-4"></i>
+          <h4 class="text-lg font-semibold text-gray-700 mb-2">
+            No Products Found
+          </h4>
+          <p class="text-sm text-gray-500 mb-4">
+            Try searching with different keywords
+          </p>
+          <button onclick="clearBtnFunction()" class="btn-primary">
+            <i class="fas fa-redo mr-2"></i> Clear and Try Again
+          </button>
+        </div>
+        {% else %}
+        <!-- Initial state - no search performed -->
+        <div
+          class="mt-6 text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200"
+        >
+          <i class="fas fa-search-plus text-blue-400 text-5xl mb-4"></i>
+          <h4 class="text-lg font-semibold text-gray-800 mb-2">
+            Start Searching
+          </h4>
+          <p class="text-sm text-gray-600 mb-1">
+            Enter medicine name, manufacturer, or category
+          </p>
+          <p class="text-xs text-gray-500">
+            Use keyboard shortcuts for faster billing
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart Section -->
+  <div class="lg:col-span-1">
+    <div
+      class="bg-white border-2 border-gray-200 rounded-lg overflow-hidden shadow-sm sticky top-24"
+    >
+      <div class="bg-gradient-to-r from-green-500 to-green-600 px-5 py-3.5">
+        <h3
+          class="text-base font-semibold text-white flex items-center justify-between"
+        >
+          <span><i class="fas fa-shopping-cart mr-2"></i>Shopping Cart</span>
+          <span
+            class="bg-white text-green-600 px-2.5 py-0.5 rounded-full text-sm font-bold"
+            >{{ cart|length }}</span
+          >
+        </h3>
+      </div>
+      <div class="p-4">
+        {% if cart %}
+        <div class="space-y-3 max-h-96 overflow-y-auto mb-4 pr-2">
+          {% for item in cart %}
+          <div
+            class="flex justify-between items-start p-3 border-2 border-gray-200 rounded-lg hover:border-primary transition-all bg-gray-50"
+          >
+            <div class="flex-1 pr-2">
+              <h5 class="font-semibold text-sm text-gray-900 mb-1">
+                {{ item.name }}
+              </h5>
+              {% if item.batch_number %}
+              <p class="text-xs text-blue-600 font-mono mb-1">
+                <i class="fas fa-barcode mr-1"></i>Batch: {{ item.batch_number
+                }} {% if item.expiry_date %}
+                <span class="text-gray-500">• Exp: {{ item.expiry_date }}</span>
+                {% endif %}
+              </p>
+              {% endif %}
+              <p class="text-primary font-bold text-sm">
+                ₹{{ "%.2f"|format(item.price|float) }}
+                <span class="text-gray-500 text-xs">× {{ item.quantity }}</span>
+              </p>
+              <p class="text-gray-900 font-bold text-sm mt-1">
+                Total: ₹{{ "%.2f"|format((item.price * item.quantity)|float) }}
+              </p>
+            </div>
+            <div class="flex flex-col gap-2 items-center">
+              <input
+                type="number"
+                name="quantity_{{ item.id }}_{{ item.batch_id if item.batch_id else 'nobatch' }}"
+                value="{{ item.quantity }}"
+                min="1"
+                max="{{ item.stock_quantity }}"
+                data-product-id="{{ item.id }}"
+                data-batch-id="{{ item.batch_id if item.batch_id else '' }}"
+                onchange="updateCartQuantity(this)"
+                class="w-16 px-2 py-1.5 border-2 border-gray-300 rounded-md text-center text-sm font-bold focus:ring-2 focus:ring-primary focus:border-primary"
+                title="Change quantity"
+              />
+              <a
+                href="{{ url_for('remove_from_cart', product_id=item.id, batch_id=item.batch_id if item.batch_id else 0) }}"
+                class="badge badge-danger"
+                title="Remove item"
+              >
+                <i class="fas fa-trash-alt"></i>
+              </a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Cart Summary -->
+        <div
+          class="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-lg p-4 mb-4"
+        >
+          {% set subtotal = namespace(value=0) %} {% for item in cart %} {% set
+          subtotal.value = subtotal.value + (item.price * item.quantity) %} {%
+          endfor %}
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-gray-700 font-medium">Total Amount</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 text-sm"
+              >{{ cart|length }} {% if cart|length == 1 %}Item{% else %}Items{%
+              endif %}</span
+            >
+            <span class="text-2xl font-bold text-primary"
+              >₹{{ "%.2f"|format(subtotal.value) }}</span
+            >
+          </div>
+        </div>
+
+        <a
+          href="{{ url_for('checkout') }}"
+          class="block w-full bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 rounded-lg text-center text-sm shadow-md hover:shadow-lg transition-all"
+          title="Proceed to Checkout (F9)"
+        >
+          <i class="fas fa-arrow-right mr-2"></i> Proceed to Checkout
+        </a>
+        {% else %}
+        <div class="text-center py-12 px-4">
+          <div
+            class="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4"
+          >
+            <i class="fas fa-shopping-cart text-gray-400 text-3xl"></i>
+          </div>
+          <h4 class="text-lg font-semibold text-gray-700 mb-2">
+            Your cart is empty
+          </h4>
+          <p class="text-sm text-gray-500 mb-1">
+            Search for medicines and add them to cart
+          </p>
+          <p class="text-xs text-gray-400">
+            Press
+            <kbd
+              class="px-2 py-0.5 bg-gray-200 border border-gray-300 rounded font-mono text-xs"
+              >F2</kbd
+            >
+            to focus on search
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Auto-update cart quantity
+  function updateCartQuantity(input) {
+    const productId = input.getAttribute("data-product-id");
+    const batchId = input.getAttribute("data-batch-id") || "nobatch";
+    const quantity = input.value;
+
+    const formData = new FormData();
+    formData.append(`quantity_${productId}_${batchId}`, quantity);
+
+    fetch('{{ url_for("update_cart") }}', {
+      method: "POST",
+      body: formData,
+    })
+      .then((response) => {
+        if (response.ok) {
+          location.reload();
+        }
+      })
+      .catch((error) => {
+        console.error("Error updating cart:", error);
+      });
+  }
+
+  // Update max quantity when batch is selected
+  function updateMaxQuantity(selectElement, productId) {
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const maxQty = selectedOption.getAttribute("data-max");
+    const qtyInput = document.getElementById("qty_" + productId);
+
+    if (maxQty && qtyInput) {
+      qtyInput.max = maxQty;
+      qtyInput.value = Math.min(qtyInput.value, maxQty);
+    }
+  }
+
+  // Load medicine names for autocomplete
+  fetch('{{ url_for("search_medicine_names") }}')
+    .then((response) => response.json())
+    .then((names) => {
+      const datalist = document.getElementById("medicineNames");
+      names.forEach((name) => {
+        const option = document.createElement("option");
+        option.value = name;
+        datalist.appendChild(option);
+      });
+    });
+
+  const clearBtnFunction = () => {
+    document.getElementById("medicineSearchInput").value = "";
+    fetch('{{ url_for("clear_search_cache") }}')
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Search cache cleared:", data);
+        location.reload();
+      })
+      .catch((error) => {
+        console.error("Error clearing search cache:", error);
+      });
+    //hot reload
+  };
+
+  // Quick billing - TAB navigation for rapid entry
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("medicineSearchInput");
+
+    // Auto-focus on search input when page loads
+    if (searchInput) {
+      searchInput.focus();
+    }
+
+    // Auto-update max quantity for pre-selected batches
+    document
+      .querySelectorAll('select[name="batch_id"]')
+      .forEach(function (select) {
+        if (select.value) {
+          // Get product ID from hidden input
+          const form = select.closest("form");
+          const productId = form.querySelector(
+            'input[name="product_id"]',
+          ).value;
+          updateMaxQuantity(select, productId);
+        }
+      });
+
+    // Add Tally-style keyboard shortcuts
+    document.addEventListener("keydown", function (e) {
+      // F2 - Focus on search (like Tally)
+      if (e.key === "F2") {
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+      }
+
+      // F3 - Clear search
+      if (e.key === "F3") {
+        e.preventDefault();
+        clearBtnFunction();
+      }
+
+      // F9 - Go to checkout if cart has items
+      if (e.key === "F9") {
+        e.preventDefault();
+        const checkoutBtn = document.querySelector(
+          'a[href="{{ url_for("checkout") }}"]',
+        );
+        if (checkoutBtn) {
+          window.location.href = checkoutBtn.href;
+        }
+      }
+
+      // ESC - Clear search field
+      if (e.key === "Escape") {
+        if (document.activeElement === searchInput) {
+          searchInput.value = "";
+        }
+      }
+
+      // Alt+S to focus on search (alternative)
+      if (e.altKey && e.key === "s") {
+        e.preventDefault();
+        searchInput.focus();
+      }
+
+      // Alt+C to go to checkout (alternative)
+      if (e.altKey && e.key === "c") {
+        e.preventDefault();
+        const checkoutBtn = document.querySelector(
+          'a[href="{{ url_for("checkout") }}"]',
+        );
+        if (checkoutBtn) {
+          window.location.href = checkoutBtn.href;
+        }
+      }
+    });
+
+    // Enable TAB navigation in search results
+    const searchResults = document.querySelectorAll('[name="quantity"]');
+    searchResults.forEach((input, index) => {
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Tab") {
+          e.preventDefault();
+          const addBtn = this.parentElement.querySelector(
+            'button[type="submit"]',
+          );
+          if (addBtn) {
+            addBtn.click();
+            if (index < searchResults.length - 1) {
+              setTimeout(() => searchResults[index + 1].focus(), 100);
+            } else {
+              setTimeout(() => searchInput.focus(), 100);
+            }
+          }
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,744 @@
+{% extends "base.html" %} {% block title %}Dashboard - MediStore Pro{% endblock
+%} {% block content %}
+
+<!-- Header -->
+<div class="section-spacing">
+  <div class="flex justify-between items-start">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">Business overview at a glance</p>
+    </div>
+    <!-- Year Selector -->
+    <div class="flex items-center gap-3">
+      <select
+        id="yearSelector"
+        onchange="changeYear()"
+        class="form-input px-4 py-2 bg-white border-2 border-blue-500 rounded-lg font-semibold text-blue-700"
+        data-current-year="{{ current_year }}"
+      >
+        {% for year in available_years %}
+        <option value="{{ year }}">{{ year }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Action Buttons -->
+<div class="section-spacing">
+  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+    <a
+      href="{{ url_for('billing') }}"
+      class="btn btn-primary text-center py-4 flex flex-col items-center gap-2"
+    >
+      <i class="fas fa-cash-register text-xl"></i>
+      <span class="text-sm">New Bill</span>
+    </a>
+    <a
+      href="{{ url_for('add_product') }}"
+      class="btn bg-green-600 hover:bg-green-700 text-white text-center py-4 flex flex-col items-center gap-2"
+    >
+      <i class="fas fa-plus-circle text-xl"></i>
+      <span class="text-sm">Add Product</span>
+    </a>
+    <a
+      href="{{ url_for('inventory') }}"
+      class="btn bg-purple-600 hover:bg-purple-700 text-white text-center py-4 flex flex-col items-center gap-2"
+    >
+      <i class="fas fa-boxes text-xl"></i>
+      <span class="text-sm">Inventory</span>
+    </a>
+    <a
+      href="{{ url_for('suppliers') }}"
+      class="btn bg-orange-600 hover:bg-orange-700 text-white text-center py-4 flex flex-col items-center gap-2"
+    >
+      <i class="fas fa-truck text-xl"></i>
+      <span class="text-sm">Suppliers</span>
+    </a>
+    <a
+      href="{{ url_for('customers') }}"
+      class="btn bg-teal-600 hover:bg-teal-700 text-white text-center py-4 flex flex-col items-center gap-2"
+    >
+      <i class="fas fa-users text-xl"></i>
+      <span class="text-sm">Customers</span>
+    </a>
+    <a
+      href="{{ url_for('reports') }}"
+      class="btn bg-indigo-600 hover:bg-indigo-700 text-white text-center py-4 flex flex-col items-center gap-2"
+    >
+      <i class="fas fa-chart-line text-xl"></i>
+      <span class="text-sm">Reports</span>
+    </a>
+  </div>
+</div>
+
+<!-- Key Metrics - 6 Cards -->
+<div
+  class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 section-spacing"
+>
+  <div class="stat-card">
+    <div class="flex items-center justify-between mb-3">
+      <span class="stat-label">Total Revenue</span>
+      <div class="stat-icon bg-green-50">
+        <i class="fas fa-rupee-sign text-green-600 text-sm"></i>
+      </div>
+    </div>
+    <div class="stat-value">
+      <span
+        class="format-amount"
+        data-amount="{{ total_revenue }}"
+        data-currency="{{ settings.get('currency_symbol', '₹') }}"
+        >{{ settings.get('currency_symbol', '₹') }}{{
+        "%.2f"|format(total_revenue|float) }}</span
+      >
+    </div>
+    <div class="stat-change text-green-600">
+      <span class="text-xs"
+        >Today:
+        <span
+          class="format-amount"
+          data-amount="{{ today_sales }}"
+          data-currency="{{ settings.get('currency_symbol', '₹') }}"
+          >{{ settings.get('currency_symbol', '₹') }}{{
+          "%.2f"|format(today_sales|float) }}</span
+        ></span
+      >
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="flex items-center justify-between mb-3">
+      <span class="stat-label">Today's Profit</span>
+      <div class="stat-icon bg-blue-50">
+        <i class="fas fa-chart-line text-blue-600 text-sm"></i>
+      </div>
+    </div>
+    <div
+      class="stat-value {% if today_profit >= 0 %}text-green-600{% else %}text-red-600{% endif %}"
+    >
+      <span
+        class="format-amount"
+        data-amount="{{ today_profit }}"
+        data-currency="{{ settings.get('currency_symbol', '₹') }}"
+        >{{ settings.get('currency_symbol', '₹') }}{{
+        "%.2f"|format(today_profit|float) }}</span
+      >
+    </div>
+    <div class="stat-change text-gray-600">Daily performance</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="flex items-center justify-between mb-3">
+      <span class="stat-label">Inventory Value</span>
+      <div class="stat-icon bg-purple-50">
+        <i class="fas fa-warehouse text-purple-600 text-sm"></i>
+      </div>
+    </div>
+    <div class="stat-value">
+      <span
+        class="format-amount"
+        data-amount="{{ inventory_value }}"
+        data-currency="{{ settings.get('currency_symbol', '₹') }}"
+        >{{ settings.get('currency_symbol', '₹') }}{{
+        "%.2f"|format(inventory_value|float) }}</span
+      >
+    </div>
+    <div class="stat-change text-gray-600">{{ total_products }} products</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="flex items-center justify-between mb-3">
+      <span class="stat-label">Low Stock Alert</span>
+      <div class="stat-icon bg-orange-50">
+        <i class="fas fa-exclamation-triangle text-orange-600 text-sm"></i>
+      </div>
+    </div>
+    <div class="stat-value">{{ low_stock_count }}</div>
+    <a
+      href="{{ url_for('low_stock') }}"
+      class="stat-change text-orange-600 inline-block hover:underline"
+    >
+      View Items →
+    </a>
+  </div>
+
+  <div class="stat-card">
+    <div class="flex items-center justify-between mb-3">
+      <span class="stat-label">Total Suppliers</span>
+      <div class="stat-icon bg-indigo-50">
+        <i class="fas fa-truck text-indigo-600 text-sm"></i>
+      </div>
+    </div>
+    <div class="stat-value">{{ total_suppliers }}</div>
+    <div class="stat-change text-indigo-600">
+      <a href="{{ url_for('suppliers') }}" class="hover:underline">
+        {% if active_suppliers > 0 %} {{ active_suppliers }} active orders → {%
+        else %} View all → {% endif %}
+      </a>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="flex items-center justify-between mb-3">
+      <span class="stat-label">Total Customers</span>
+      <div class="stat-icon bg-teal-50">
+        <i class="fas fa-users text-teal-600 text-sm"></i>
+      </div>
+    </div>
+    <div class="stat-value">{{ total_customers }}</div>
+    <div class="stat-change text-teal-600">
+      <a href="{{ url_for('customers') }}" class="hover:underline">
+        {{ total_bills }} bills total →
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Pending Supplier Orders -->
+{% if pending_orders_count > 0 %}
+<div class="card section-spacing">
+  <div
+    class="card-body border-b border-gray-200 flex items-center justify-between"
+  >
+    <div>
+      <h3 class="section-header">Pending Supplier Orders</h3>
+      <p class="text-small">Orders awaiting delivery</p>
+    </div>
+    <span class="badge badge-warning">{{ pending_orders_count }} Pending</span>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full data-table">
+      <thead>
+        <tr>
+          <th class="text-left py-3 px-4">Order #</th>
+          <th class="text-left py-3 px-4">Product</th>
+          <th class="text-left py-3 px-4">Supplier</th>
+          <th class="text-left py-3 px-4">Qty</th>
+          <th class="text-left py-3 px-4">Amount</th>
+          <th class="text-left py-3 px-4">Expected</th>
+          <th class="text-left py-3 px-4">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in pending_orders %}
+        <tr>
+          <td class="px-4 py-3 font-medium text-primary">
+            #{{ order.purchase_id }}
+          </td>
+          <td class="px-4 py-3">{{ order.medicine_name }}</td>
+          <td class="px-4 py-3">{{ order.supplier_name }}</td>
+          <td class="px-4 py-3">{{ order.quantity }}</td>
+          <td class="px-4 py-3 font-semibold">
+            <span
+              class="format-amount"
+              data-amount="{{ order.total_amount }}"
+              data-currency="{{ settings.get('currency_symbol', '₹') }}"
+              >{{ settings.get('currency_symbol', '₹') }}{{
+              "%.2f"|format(order.total_amount|float) }}</span
+            >
+          </td>
+          <td class="px-4 py-3">
+            {% if order.expected_delivery_date %}{{
+            order.expected_delivery_date.strftime('%d %b') }}{% else %}Not set{%
+            endif %}
+          </td>
+          <td class="px-4 py-3">
+            <a
+              href="{{ url_for('supplier_purchases', supplier_id=order.supplier_id) }}"
+              class="text-primary hover:text-blue-700 font-medium"
+              >View →</a
+            >
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Supplier Management Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 section-spacing">
+  <!-- Top Suppliers -->
+  <div class="card">
+    <div
+      class="card-body border-b border-gray-200 flex items-center justify-between"
+    >
+      <div>
+        <h3 class="section-header">Top Suppliers</h3>
+        <p class="text-small">By purchase volume</p>
+      </div>
+      <a
+        href="{{ url_for('suppliers') }}"
+        class="text-primary hover:text-blue-700 text-sm font-medium"
+      >
+        View All →
+      </a>
+    </div>
+    <div class="card-body">
+      {% if top_suppliers %}
+      <div class="space-y-3">
+        {% for supplier in top_suppliers %}
+        <div
+          class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+        >
+          <div class="flex-1">
+            <div class="font-medium text-gray-900">{{ supplier.name }}</div>
+            <div class="text-sm text-gray-600">
+              {% if supplier.company_name %}{{ supplier.company_name }}{% else
+              %}{{ supplier.phone }}{% endif %}
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="font-semibold text-gray-900">
+              <span
+                class="format-amount"
+                data-amount="{{ supplier.total_purchase_value if supplier.total_purchase_value else 0 }}"
+                data-currency="{{ settings.get('currency_symbol', '₹') }}"
+                >{{ settings.get('currency_symbol', '₹') }}{{
+                "%.0f"|format(supplier.total_purchase_value|float) if
+                supplier.total_purchase_value else '0' }}</span
+              >
+            </div>
+            <div class="text-sm text-gray-600">
+              {{ supplier.order_count if supplier.order_count else 0 }} orders
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-8 text-gray-500">
+        <i class="fas fa-truck text-3xl mb-2"></i>
+        <p>No supplier data available</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent Supplier Deliveries -->
+  <div class="card">
+    <div
+      class="card-body border-b border-gray-200 flex items-center justify-between"
+    >
+      <div>
+        <h3 class="section-header">Recent Deliveries</h3>
+        <p class="text-small">Latest supplier deliveries</p>
+      </div>
+      <a
+        href="{{ url_for('suppliers') }}"
+        class="text-primary hover:text-blue-700 text-sm font-medium"
+      >
+        View All →
+      </a>
+    </div>
+    <div class="card-body">
+      {% if recent_supplier_deliveries %}
+      <div class="space-y-3">
+        {% for delivery in recent_supplier_deliveries %}
+        <div
+          class="flex items-start justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+        >
+          <div class="flex-1">
+            <div class="font-medium text-gray-900">
+              {{ delivery.medicine_name }}
+            </div>
+            <div class="text-sm text-gray-600">
+              {{ delivery.supplier_name }} • {{ delivery.quantity }} units
+            </div>
+            <div class="text-xs text-gray-500 mt-1">
+              {{ delivery.received_date.strftime('%d %b %Y') }}
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="font-semibold text-gray-900">
+              <span
+                class="format-amount"
+                data-amount="{{ delivery.total_amount }}"
+                data-currency="{{ settings.get('currency_symbol', '₹') }}"
+                >{{ settings.get('currency_symbol', '₹') }}{{
+                "%.2f"|format(delivery.total_amount|float) }}</span
+              >
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-8 text-gray-500">
+        <i class="fas fa-box text-3xl mb-2"></i>
+        <p>No recent deliveries</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 section-spacing">
+  <!-- Sales Trend Chart -->
+  <div class="card">
+    <div class="card-body border-b border-gray-200">
+      <h3 class="section-header">Sales Trend</h3>
+      <p class="text-small">Last 7 days</p>
+    </div>
+    <div class="card-body">
+      <div class="h-52">
+        <canvas id="salesChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Sales Chart -->
+  <div class="card">
+    <div class="card-body border-b border-gray-200">
+      <h3 class="section-header">Monthly Revenue</h3>
+      <p class="text-small">Last 12 months</p>
+    </div>
+    <div class="card-body">
+      <div class="h-52">
+        <canvas id="monthlySalesChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Company Stock & Top Medicines -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 section-spacing">
+  <div class="card">
+    <div class="card-body border-b border-gray-200">
+      <h3 class="section-header">Stock by Company</h3>
+      <p class="text-small">Top manufacturers</p>
+    </div>
+    <div class="card-body">
+      <div class="h-64">
+        <canvas id="companyStockChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body border-b border-gray-200">
+      <h3 class="section-header">Top Selling Medicines</h3>
+      <p class="text-small">Revenue leaders</p>
+    </div>
+    <div class="card-body">
+      <div class="h-64">
+        <canvas id="topMedicinesChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Bills -->
+<div class="card section-spacing">
+  <div
+    class="card-body border-b border-gray-200 flex items-center justify-between"
+  >
+    <div>
+      <h3 class="section-header">Recent Bills</h3>
+      <p class="text-small">Latest transactions</p>
+    </div>
+    <a
+      href="{{ url_for('bills') }}"
+      class="text-primary hover:text-blue-700 text-sm font-medium"
+    >
+      View All →
+    </a>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full data-table">
+      <thead>
+        <tr>
+          <th class="text-left py-3 px-4">Bill #</th>
+          <th class="text-left py-3 px-4">Customer</th>
+          <th class="text-left py-3 px-4">Date</th>
+          <th class="text-right py-3 px-4">Amount</th>
+          <th class="text-right py-3 px-4">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for bill in recent_bills %}
+        <tr>
+          <td class="px-4 py-3 font-medium text-primary">#{{ bill.id }}</td>
+          <td class="px-4 py-3">{{ bill.customer_name }}</td>
+          <td class="px-4 py-3">
+            {{ bill.bill_date.strftime('%d %b, %I:%M %p') }}
+          </td>
+          <td class="px-4 py-3 font-semibold text-right">
+            <span
+              class="format-amount"
+              data-amount="{{ bill.total_amount }}"
+              data-currency="{{ settings.get('currency_symbol', '₹') }}"
+              >{{ settings.get('currency_symbol', '₹') }}{{
+              "%.2f"|format(bill.total_amount|float) }}</span
+            >
+          </td>
+          <td class="px-4 py-3 text-right">
+            <a
+              href="{{ url_for('invoice', bill_id=bill.id) }}"
+              class="text-primary hover:text-blue-700 text-sm font-medium"
+              target="_blank"
+            >
+              View →
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="px-4 py-8 text-center text-gray-500 text-sm">
+            <i class="fas fa-receipt text-3xl mb-2"></i>
+            <p>No recent bills</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %} {% block extra_css %}
+<style>
+  /* Amount Tooltip Styling */
+  .amount-tooltip {
+    position: relative;
+    cursor: help;
+    display: inline-block;
+  }
+
+  .amount-tooltip::after {
+    content: attr(data-full-amount);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1f2937;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.3s,
+      visibility 0.3s;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  .amount-tooltip::before {
+    content: "";
+    position: absolute;
+    bottom: 115%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1f2937;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.3s,
+      visibility 0.3s;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .amount-tooltip:hover::after,
+  .amount-tooltip:hover::before {
+    opacity: 1;
+    visibility: visible;
+  }
+</style>
+{% endblock %} {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Amount Formatting Function
+  function formatAmount(amount) {
+    const num = parseFloat(amount);
+    if (isNaN(num)) return '0';
+
+    if (num >= 10000000) {
+      return (num / 10000000).toFixed(2) + ' Cr';
+    } else if (num >= 100000) {
+      return (num / 100000).toFixed(2) + ' L';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(2) + ' K';
+    }
+    return num.toFixed(2);
+  }
+
+  function formatFullAmount(amount, currencySymbol = '₹') {
+    const num = parseFloat(amount);
+    if (isNaN(num)) return currencySymbol + '0.00';
+    return currencySymbol + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // Initialize amount tooltips on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    // Format all amounts with class 'format-amount'
+    document.querySelectorAll('.format-amount').forEach(function(element) {
+      const amount = element.getAttribute('data-amount');
+      const currencySymbol = element.getAttribute('data-currency') || '₹';
+
+      const formatted = formatAmount(amount);
+      const fullAmount = formatFullAmount(amount, currencySymbol);
+
+      element.textContent = currencySymbol + formatted;
+      element.setAttribute('data-full-amount', fullAmount);
+      element.classList.add('amount-tooltip');
+    });
+  });
+  // Sales Chart
+  const salesData = {{ sales_chart|tojson|safe }};
+  const labels = salesData.map(item => {
+      const date = new Date(item.date);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+  const data = salesData.map(item => item.daily_sales);
+
+  const ctx = document.getElementById('salesChart');
+  new Chart(ctx, {
+      type: 'line',
+      data: {
+          labels: labels,
+          datasets: [{
+              label: 'Daily Sales (₹)',
+              data: data,
+              borderColor: '#0066FF',
+              backgroundColor: 'rgba(0, 102, 255, 0.1)',
+              tension: 0.4,
+              fill: true,
+              borderWidth: 2
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+            x: { grid: { display: false } }
+          }
+      }
+  });
+
+  // Monthly Sales Chart
+  const monthlySalesData = {{ monthly_sales|tojson|safe }};
+  const monthLabels = monthlySalesData.map(item => {
+      const [year, month] = item.month.split('-');
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+  });
+  const monthData = monthlySalesData.map(item => item.monthly_sales);
+
+  const monthCtx = document.getElementById('monthlySalesChart');
+  new Chart(monthCtx, {
+      type: 'bar',
+      data: {
+          labels: monthLabels,
+          datasets: [{
+              label: 'Monthly Sales (₹)',
+              data: monthData,
+              backgroundColor: '#0066FF',
+              borderRadius: 4
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+            x: { grid: { display: false } }
+          }
+      }
+  });
+
+  // Company Stock Chart
+  const companyStockData = {{ company_stock|tojson|safe }};
+  const companyLabels = companyStockData.map(item => item.manufacturer);
+  const stockData = companyStockData.map(item => item.total_stock);
+  const stockColors = [
+      '#0066FF', '#00A65A', '#F39C12', '#DD4B39', '#8b5cf6',
+      '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#6366f1'
+  ];
+
+  const companyCtx = document.getElementById('companyStockChart');
+  new Chart(companyCtx, {
+      type: 'doughnut',
+      data: {
+          labels: companyLabels,
+          datasets: [{
+              label: 'Stock Quantity',
+              data: stockData,
+              backgroundColor: stockColors,
+              borderWidth: 2,
+              borderColor: '#fff'
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+              legend: {
+                  position: 'bottom',
+                  labels: { padding: 12, font: { size: 11 } }
+              }
+          }
+      }
+  });
+
+  // Top Medicines Chart
+  const topMedicinesData = {{ top_selling_medicines|tojson|safe }};
+  const medicineLabels = topMedicinesData.map(item => item.medicine_name);
+  const medicineRevenue = topMedicinesData.map(item => item.revenue);
+
+  const medicineCtx = document.getElementById('topMedicinesChart');
+  new Chart(medicineCtx, {
+      type: 'bar',
+      data: {
+          labels: medicineLabels,
+          datasets: [{
+              label: 'Revenue (₹)',
+              data: medicineRevenue,
+              backgroundColor: '#00A65A',
+              borderRadius: 4
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+            y: { grid: { display: false } }
+          }
+      }
+  });
+
+  // Year Selector Function
+  function changeYear() {
+    const selector = document.getElementById('yearSelector');
+    const year = selector.value;
+    window.location.href = `/dashboard?year=${year}`;
+  }
+
+  // Set selected year on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    const selector = document.getElementById('yearSelector');
+    const currentYear = selector.dataset.currentYear;
+
+    // Set the selected option
+    for (let option of selector.options) {
+      if (option.value === currentYear) {
+        option.selected = true;
+        break;
+      }
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customer Lookup - MediStore Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#4f46e5",
+              accent: "#10b981",
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body
+    class="bg-gradient-to-br from-purple-600 via-purple-500 to-indigo-600 min-h-screen flex items-center justify-center p-5"
+  >
+    <div class="bg-white rounded-md p-10 w-full max-w-md animate-fade-in">
+      <div class="text-center mb-8">
+        <i class="fas fa-user-circle text-5xl text-accent mb-4"></i>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Regular Customer</h1>
+        <p class="text-gray-600 text-sm">Find Your Medicines</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %}
+      <div class="space-y-2 mb-6">
+        {% for category, message in messages %}
+        <div
+          class="px-4 py-3 rounded flex items-center gap-3 {% if category == 'warning' %}bg-yellow-50 text-yellow-800 border-l-4 border-yellow-500{% elif category == 'danger' %}bg-red-50 text-red-800 border-l-4 border-red-500{% endif %}"
+        >
+          <i class="fas fa-exclamation-circle text-lg"></i>
+          <span class="text-sm">{{ message }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %} {% endwith %}
+
+      <form method="POST" action="{{ url_for('customer_lookup') }}">
+        <div class="mb-6">
+          <label class="block mb-1.5 text-sm font-medium text-gray-700">
+            <i class="fas fa-mobile-alt mr-2"></i>Enter Your Phone Number
+          </label>
+          <input
+            type="tel"
+            name="phone"
+            required
+            placeholder="10-digit number"
+            pattern="[0-9]{10}"
+            title="Please enter a valid 10-digit phone number"
+            maxlength="10"
+            class="w-full form-input text-center tracking-wider"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="w-full btn-success mb-4 flex items-center justify-center gap-2"
+        >
+          <i class="fas fa-search"></i> Find My Medicines
+        </button>
+      </form>
+
+      <a
+        href="{{ url_for('index') }}"
+        class="block w-full border border-gray-600 hover:bg-gray-700 bg-gray-600 text-white font-medium py-2.5 px-4 rounded text-center"
+      >
+        <i class="fas fa-arrow-left mr-2"></i>Back to Login
+      </a>
+
+      <div
+        class="mt-6 p-4 bg-green-50 rounded border-2 border-dashed border-accent"
+      >
+        <h4
+          class="text-accent font-semibold mb-2 flex items-center gap-2 text-sm"
+        >
+          <i class="fas fa-info-circle"></i> For Regular Customers
+        </h4>
+        <p class="text-green-800 text-xs leading-relaxed">
+          Enter your registered phone number to view your regular medicines and
+          purchase history. If you're a new customer, please contact our staff
+          to register first.
+        </p>
+      </div>
+    </div>
+
+    <style>
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-fade-in {
+        animation: fade-in 0.5s ease-out;
+      }
+    </style>
+  </body>
+</html>

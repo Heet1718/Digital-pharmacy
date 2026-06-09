@@ -1,0 +1,413 @@
+{% extends "base.html" %} {% block title %}Supplier Purchases - MediStore Pro{%
+endblock %} {% block content %}
+<div class="flex justify-between items-start mb-6">
+  <div>
+    <h1 class="text-2xl font-semibold text-gray-900">Supplier Purchases</h1>
+    {% if supplier %}
+    <p class="text-gray-600 text-sm mt-1">
+      Supplier: <span class="font-semibold">{{ supplier.name }}</span>
+      {% if supplier.company_name %}({{ supplier.company_name }}){% endif %}
+    </p>
+    {% endif %}
+  </div>
+  <div class="flex gap-3">
+    <a href="{{ url_for('suppliers') }}" class="btn-secondary">
+      <i class="fas fa-arrow-left mr-2"></i> Back to Suppliers
+    </a>
+    {% if session.get('role') == 'owner' %}
+    <button
+      onclick="
+        document.getElementById('addPurchaseModal').classList.remove('hidden')
+      "
+      class="btn-primary"
+    >
+      <i class="fas fa-plus mr-2"></i> New Purchase Order
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+  <div
+    class="border border-gray-200 rounded-md p-4 hover:border-primary flex items-center gap-3"
+  >
+    <div
+      class="w-12 h-12 bg-blue-100 text-blue-600 rounded flex items-center justify-center text-xl"
+    >
+      <i class="fas fa-shipping-fast"></i>
+    </div>
+    <div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ stats.ordered }}</h3>
+      <p class="text-gray-600 text-sm">Ordered</p>
+    </div>
+  </div>
+  <div
+    class="border border-gray-200 rounded-md p-4 hover:border-primary flex items-center gap-3"
+  >
+    <div
+      class="w-12 h-12 bg-green-100 text-green-600 rounded flex items-center justify-center text-xl"
+    >
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ stats.received }}</h3>
+      <p class="text-gray-600 text-sm">Received</p>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="bg-white border border-gray-200 rounded-md overflow-hidden mb-6">
+  <div class="flex border-b border-gray-200">
+    <a
+      href="?status=all"
+      class="flex-1 px-4 py-3 text-center font-medium text-sm {% if status == 'all' %}bg-primary text-white{% else %}text-gray-600 hover:bg-gray-50{% endif %}"
+    >
+      All Orders
+    </a>
+    <a
+      href="?status=ordered"
+      class="flex-1 px-4 py-3 text-center font-medium text-sm {% if status == 'ordered' %}bg-blue-500 text-white{% else %}text-gray-600 hover:bg-gray-50{% endif %}"
+    >
+      Ordered
+    </a>
+    <a
+      href="?status=received"
+      class="flex-1 px-4 py-3 text-center font-medium text-sm {% if status == 'received' %}bg-green-500 text-white{% else %}text-gray-600 hover:bg-gray-50{% endif %}"
+    >
+      Received
+    </a>
+  </div>
+</div>
+
+<!-- Purchases Table -->
+<div class="bg-white border border-gray-200 rounded-md overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full data-table">
+      <thead class="bg-gray-50">
+        <tr>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Purchase #
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Medicine
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Batch
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Expiry
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Quantity
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Unit Price
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Total
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Status
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Dates
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {% for purchase in purchases %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 font-mono text-sm text-gray-900">
+            {{ purchase.purchase_number }}
+          </td>
+          <td class="px-4 py-3 font-semibold text-gray-900">
+            {{ purchase.medicine_name }}
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-600">
+            {% if purchase.batch_number %}
+            <span class="font-mono">{{ purchase.batch_number }}</span>
+            {% else %}
+            <span class="text-gray-400">-</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-600">
+            {% if purchase.expiry_date %} {{ purchase.expiry_date }} {% else %}
+            <span class="text-gray-400">Not set</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-gray-600">{{ purchase.quantity }} units</td>
+          <td class="px-4 py-3 text-gray-600">
+            ₹{{ "%.2f"|format(purchase.unit_price|float) }}
+          </td>
+          <td class="px-4 py-3 font-bold text-accent">
+            ₹{{ "%.2f"|format(purchase.total_amount|float) }}
+          </td>
+          <td class="px-4 py-3">
+            {% if purchase.status == 'ordered' %}
+            <span class="badge badge-info"> Ordered </span>
+            {% else %}
+            <span class="badge badge-success"> Received </span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-sm text-gray-600">
+            {% if purchase.order_date %}
+            <div><strong>Ordered:</strong> {{ purchase.order_date }}</div>
+            {% endif %} {% if purchase.expected_delivery_date %}
+            <div>
+              <strong>Expected:</strong> {{ purchase.expected_delivery_date }}
+            </div>
+            {% endif %} {% if purchase.received_date %}
+            <div><strong>Received:</strong> {{ purchase.received_date }}</div>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex gap-2">
+              {% if purchase.status == 'to_be_ordered' %}
+              <a
+                href="{{ url_for('update_purchase_status', purchase_id=purchase.id, new_status='ordered') }}"
+                class="badge badge-info"
+                onclick="return confirm('Mark as ordered?');"
+              >
+                <i class="fas fa-check mr-1"></i> Mark Ordered
+              </a>
+              {% elif purchase.status == 'ordered' %}
+              <a
+                href="{{ url_for('receive_purchase', purchase_id=purchase.id) }}"
+                class="badge badge-success"
+              >
+                <i class="fas fa-box mr-1"></i> Mark Received
+              </a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Purchase Modal -->
+<div
+  id="addPurchaseModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+>
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl m-4">
+    <div
+      class="bg-gradient-to-r from-primary to-indigo-700 px-6 py-4 rounded-t-xl"
+    >
+      <h3 class="text-xl font-bold text-white flex items-center gap-2">
+        <i class="fas fa-plus-circle"></i> New Purchase Order
+      </h3>
+    </div>
+    <form
+      method="POST"
+      action="{{ url_for('add_supplier_purchase') }}"
+      class="p-6"
+    >
+      <input
+        type="hidden"
+        name="supplier_id"
+        value="{{ supplier.id if supplier else '' }}"
+      />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="md:col-span-2">
+          <label class="form-label">Medicine Name *</label>
+          <div class="relative">
+            <input
+              type="text"
+              id="medicineNameInput"
+              name="medicine_name"
+              required
+              list="medicineList"
+              class="w-full form-input"
+              placeholder="Enter or select medicine"
+              oninput="checkMedicineExists(this.value)"
+            />
+            <datalist id="medicineList">
+              {% for product in products %}
+              <option value="{{ product.name }}">{% endfor %}</option>
+            </datalist>
+            <div id="medicineStatus" class="mt-2 hidden">
+              <div
+                id="medicineFound"
+                class="hidden text-sm text-green-600 flex items-center gap-2"
+              >
+                <i class="fas fa-check-circle"></i>
+                <span>Medicine exists in inventory</span>
+              </div>
+              <div
+                id="medicineNotFound"
+                class="hidden text-sm text-red-600 flex items-center gap-2"
+              >
+                <i class="fas fa-times-circle"></i>
+                <span
+                  >Medicine not found in inventory. Please add the product to
+                  inventory first.</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Quantity *</label>
+          <input
+            type="number"
+            name="quantity"
+            required
+            min="1"
+            class="w-full form-input"
+            placeholder="Enter quantity"
+          />
+        </div>
+        <div>
+          <label class="form-label">Unit Price *</label>
+          <input
+            type="number"
+            name="unit_price"
+            required
+            min="0"
+            step="0.01"
+            class="w-full form-input"
+            placeholder="Price per unit"
+          />
+        </div>
+        <div>
+          <label class="form-label">Batch Number</label>
+          <input
+            type="text"
+            name="batch_number"
+            class="w-full form-input"
+            placeholder="Enter batch number"
+          />
+        </div>
+        <div>
+          <label class="form-label">Expiry Date</label>
+          <input type="date" name="expiry_date" class="w-full form-input" />
+        </div>
+        <div>
+          <label class="form-label">Status *</label>
+          <select name="status" required class="w-full form-input">
+            <option value="ordered">Ordered</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Expected Delivery Date</label>
+          <input
+            type="date"
+            name="expected_delivery_date"
+            class="w-full form-input"
+          />
+        </div>
+        <div class="md:col-span-2">
+          <label class="form-label">Notes</label>
+          <textarea
+            name="notes"
+            rows="2"
+            class="w-full form-input"
+            placeholder="Additional notes"
+          ></textarea>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button
+          type="submit"
+          id="submitPurchaseBtn"
+          class="flex-1 btn-primary disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+          <i class="fas fa-save mr-2"></i> Create Purchase Order
+        </button>
+        <button
+          type="button"
+          onclick="
+            document.getElementById('addPurchaseModal').classList.add('hidden')
+          "
+          class="flex-1 btn-secondary"
+        >
+          <i class="fas fa-times mr-2"></i> Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Check if medicine exists in inventory
+  function checkMedicineExists(medicineName) {
+    const statusDiv = document.getElementById("medicineStatus");
+    const foundDiv = document.getElementById("medicineFound");
+    const notFoundDiv = document.getElementById("medicineNotFound");
+    const input = document.getElementById("medicineNameInput");
+    const submitBtn = document.getElementById("submitPurchaseBtn");
+
+    if (!medicineName || medicineName.trim().length < 2) {
+      statusDiv.classList.add("hidden");
+      foundDiv.classList.add("hidden");
+      notFoundDiv.classList.add("hidden");
+      input.classList.remove("border-green-500", "border-red-500");
+      input.classList.add("border-slate-300");
+      submitBtn.disabled = true;
+      return;
+    }
+
+    // Get all medicine names from datalist
+    const datalist = document.getElementById("medicineList");
+    const options = Array.from(datalist.options).map((opt) =>
+      opt.value.toLowerCase(),
+    );
+
+    const exists = options.includes(medicineName.trim().toLowerCase());
+
+    statusDiv.classList.remove("hidden");
+
+    if (exists) {
+      foundDiv.classList.remove("hidden");
+      notFoundDiv.classList.add("hidden");
+      input.classList.remove("border-slate-300", "border-red-500");
+      input.classList.add("border-green-500");
+      submitBtn.disabled = false;
+    } else {
+      foundDiv.classList.add("hidden");
+      notFoundDiv.classList.remove("hidden");
+      input.classList.remove("border-slate-300", "border-green-500");
+      input.classList.add("border-red-500");
+      submitBtn.disabled = true;
+    }
+  }
+
+  // Close modal on outside click
+  document
+    .getElementById("addPurchaseModal")
+    .addEventListener("click", function (e) {
+      if (e.target === this) {
+        this.classList.add("hidden");
+      }
+    });
+</script>
+
+{% endblock %}

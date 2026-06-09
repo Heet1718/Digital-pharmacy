@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Staff Performance Detail - MediStore Pro{% endblock %}
+
+{% block content %}
+<div class="section-spacing">
+    <div class="flex justify-between items-end mb-6">
+        <div>
+            <h1 class="page-title">{{ staff.full_name }}'s Performance</h1>
+            <p class="page-subtitle">Role: {{ staff.role|capitalize }} | Username: {{ staff.username }}</p>
+        </div>
+        <a href="{{ url_for('staff_analysis') }}" class="btn-secondary">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Analysis
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="card p-4 border-l-4 border-indigo-600">
+            <p class="text-sm text-gray-500 font-medium">Total Bills</p>
+            <p class="text-2xl font-bold text-gray-900">{{ summary.total_bills }}</p>
+        </div>
+        <div class="card p-4 border-l-4 border-green-600">
+            <p class="text-sm text-gray-500 font-medium">Total Sales</p>
+            <p class="text-2xl font-bold text-gray-900">INR {{ "{:,.2f}".format(summary.total_sales|float) }}</p>
+        </div>
+        <div class="card p-4 border-l-4 border-blue-600">
+            <p class="text-sm text-gray-500 font-medium">Avg. Sale Value</p>
+            <p class="text-2xl font-bold text-gray-900">INR {{ "{:,.2f}".format(summary.avg_sale|float) }}</p>
+        </div>
+        <div class="card p-4 border-l-4 border-yellow-600">
+            <p class="text-sm text-gray-500 font-medium">Last Active</p>
+            <p class="text-lg font-bold text-gray-900">
+                {% if summary.last_sale %}
+                    {{ summary.last_sale.strftime('%d %b %Y') }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header border-b border-gray-100 p-4">
+            <h3 class="font-bold text-gray-800">Recent Transactions</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full data-table">
+                <thead>
+                    <tr class="bg-gray-50 text-left">
+                        <th class="py-3 px-4">Bill No.</th>
+                        <th class="py-3 px-4">Date</th>
+                        <th class="py-3 px-4">Customer</th>
+                        <th class="py-3 px-4">Items</th>
+                        <th class="py-3 px-4 text-right">Total Amount</th>
+                        <th class="py-3 px-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bill in bills %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td class="py-3 px-4 font-medium text-indigo-600">{{ bill.bill_number }}</td>
+                        <td class="py-3 px-4 text-sm text-gray-600">{{ bill.bill_date.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td class="py-3 px-4">
+                            <span class="font-medium text-gray-900">{{ bill.customer_name }}</span><br>
+                            <span class="text-xs text-gray-500">{{ bill.phone }}</span>
+                        </td>
+                        <td class="py-3 px-4 text-center">{{ bill.item_count }}</td>
+                        <td class="py-3 px-4 text-right font-bold text-gray-900">
+                            INR {{ "{:,.2f}".format(bill.total_amount|float) }}
+                        </td>
+                        <td class="py-3 px-4">
+                            <a href="{{ url_for('invoice', bill_id=bill.id) }}" class="text-indigo-600 hover:underline text-sm">
+                                View Invoice
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-8 text-gray-500">No bills found for this staff member.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

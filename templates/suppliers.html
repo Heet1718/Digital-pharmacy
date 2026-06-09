@@ -1,0 +1,335 @@
+{% extends "base.html" %} {% block title %}Suppliers - MediStore Pro{% endblock
+%} {% block content %}
+<div class="flex justify-between items-start mb-6">
+  <div>
+    <h1 class="text-2xl font-semibold text-gray-900">Supplier Management</h1>
+    <p class="text-gray-600 text-sm mt-1">
+      Manage suppliers and purchase orders
+    </p>
+  </div>
+  {% if session.get('role') == 'owner' %}
+  <button
+    onclick="
+      document.getElementById('addSupplierModal').classList.remove('hidden')
+    "
+    class="btn-primary"
+  >
+    <i class="fas fa-plus mr-2"></i> Add New Supplier
+  </button>
+  {% endif %}
+</div>
+
+<!-- Search Box -->
+<div class="bg-white border border-gray-200 rounded-md p-4 mb-6">
+  <div class="flex gap-3">
+    <input
+      type="text"
+      id="supplierSearch"
+      placeholder="Search by name, company, or phone..."
+      class="form-input flex-1"
+    />
+    <button onclick="filterSuppliers()" class="btn-primary">
+      <i class="fas fa-search mr-2"></i> Search
+    </button>
+  </div>
+</div>
+
+<!-- Suppliers Table -->
+<div class="bg-white border border-gray-200 rounded-md overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full data-table" id="suppliersTable">
+      <thead class="bg-gray-50">
+        <tr>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Supplier Name
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Company
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Phone
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Email
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            GSTIN
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase"
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        {% for supplier in suppliers %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 font-semibold text-gray-900">
+            {{ supplier.name }}
+          </td>
+          <td class="px-4 py-3 text-gray-600">
+            {{ supplier.company_name or 'N/A' }}
+          </td>
+          <td class="px-4 py-3 text-gray-600">
+            <i class="fas fa-phone text-accent mr-1"></i> {{ supplier.phone }}
+          </td>
+          <td class="px-4 py-3 text-gray-600">{{ supplier.email or 'N/A' }}</td>
+          <td class="px-4 py-3 text-gray-600 font-mono text-sm">
+            {{ supplier.gstin or 'N/A' }}
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex gap-2">
+              <a
+                href="{{ url_for('supplier_purchases', supplier_id=supplier.id) }}"
+                class="badge badge-info"
+              >
+                <i class="fas fa-shopping-cart mr-1"></i> Purchases
+              </a>
+              {% if session.get('role') == 'owner' %}
+              <button
+                onclick="editSupplier({{ supplier.id }})"
+                class="badge badge-warning"
+              >
+                <i class="fas fa-edit"></i>
+              </button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Supplier Modal -->
+<div
+  id="addSupplierModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+>
+  <div class="bg-white rounded-md w-full max-w-2xl m-4">
+    <div class="border-b border-gray-200 px-5 py-3.5">
+      <h3 class="text-base font-semibold text-gray-900">Add New Supplier</h3>
+    </div>
+    <form method="POST" action="{{ url_for('add_supplier') }}" class="p-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="form-label">Supplier Name *</label>
+          <input
+            type="text"
+            name="name"
+            required
+            class="w-full form-input"
+            placeholder="Enter supplier name"
+          />
+        </div>
+        <div>
+          <label class="form-label">Company Name</label>
+          <input
+            type="text"
+            name="company_name"
+            class="w-full form-input"
+            placeholder="Enter company name"
+          />
+        </div>
+        <div>
+          <label class="form-label">Phone Number *</label>
+          <input
+            type="tel"
+            name="phone"
+            required
+            pattern="[0-9]{10}"
+            class="w-full form-input"
+            placeholder="10-digit phone number"
+          />
+        </div>
+        <div>
+          <label class="form-label">Email</label>
+          <input
+            type="email"
+            name="email"
+            class="w-full form-input"
+            placeholder="supplier@example.com"
+          />
+        </div>
+        <div>
+          <label class="form-label">GSTIN</label>
+          <input
+            type="text"
+            name="gstin"
+            class="w-full form-input"
+            placeholder="GST Identification Number"
+          />
+        </div>
+        <div class="md:col-span-2">
+          <label class="form-label">Address</label>
+          <textarea
+            name="address"
+            rows="3"
+            class="w-full form-input"
+            placeholder="Enter full address"
+          ></textarea>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-4">
+        <button type="submit" class="flex-1 btn-primary">
+          <i class="fas fa-save mr-2"></i> Save Supplier
+        </button>
+        <button
+          type="button"
+          onclick="
+            document.getElementById('addSupplierModal').classList.add('hidden')
+          "
+          class="flex-1 btn-secondary"
+        >
+          <i class="fas fa-times mr-2"></i> Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Supplier Modal -->
+<div
+  id="editSupplierModal"
+  class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+>
+  <div class="bg-white rounded-md w-full max-w-2xl m-4">
+    <div class="border-b border-gray-200 px-5 py-3.5">
+      <h3 class="text-base font-semibold text-gray-900">Edit Supplier</h3>
+    </div>
+    <form method="POST" action="" id="editSupplierForm" class="p-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="form-label">Supplier Name *</label>
+          <input
+            type="text"
+            name="name"
+            id="edit_name"
+            required
+            class="w-full form-input"
+            placeholder="Enter supplier name"
+          />
+        </div>
+        <div>
+          <label class="form-label">Company Name</label>
+          <input
+            type="text"
+            name="company_name"
+            id="edit_company_name"
+            class="w-full form-input"
+            placeholder="Enter company name"
+          />
+        </div>
+        <div>
+          <label class="form-label">Phone Number *</label>
+          <input
+            type="tel"
+            name="phone"
+            id="edit_phone"
+            required
+            pattern="[0-9]{10}"
+            class="w-full form-input"
+            placeholder="10-digit phone number"
+          />
+        </div>
+        <div>
+          <label class="form-label">Email</label>
+          <input
+            type="email"
+            name="email"
+            id="edit_email"
+            class="w-full form-input"
+            placeholder="supplier@example.com"
+          />
+        </div>
+        <div>
+          <label class="form-label">GSTIN</label>
+          <input
+            type="text"
+            name="gstin"
+            id="edit_gstin"
+            class="w-full form-input"
+            placeholder="GST Identification Number"
+          />
+        </div>
+        <div class="md:col-span-2">
+          <label class="form-label">Address</label>
+          <textarea
+            name="address"
+            id="edit_address"
+            rows="3"
+            class="w-full form-input"
+            placeholder="Enter full address"
+          ></textarea>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-4">
+        <button type="submit" class="flex-1 btn-warning">
+          <i class="fas fa-save mr-2"></i> Update Supplier
+        </button>
+        <button
+          type="button"
+          onclick="
+            document.getElementById('editSupplierModal').classList.add('hidden')
+          "
+          class="flex-1 btn-secondary"
+        >
+          <i class="fas fa-times mr-2"></i> Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const suppliersData = {{ suppliers | tojson }};
+
+  function editSupplier(supplierId) {
+    const supplier = suppliersData.find(s => s.id === supplierId);
+    if (!supplier) return;
+
+    // Populate form fields
+    document.getElementById('edit_name').value = supplier.name || '';
+    document.getElementById('edit_company_name').value = supplier.company_name || '';
+    document.getElementById('edit_phone').value = supplier.phone || '';
+    document.getElementById('edit_email').value = supplier.email || '';
+    document.getElementById('edit_gstin').value = supplier.gstin || '';
+    document.getElementById('edit_address').value = supplier.address || '';
+
+    // Set form action
+    document.getElementById('editSupplierForm').action = `/edit_supplier/${supplierId}`;
+
+    // Show modal
+    document.getElementById('editSupplierModal').classList.remove('hidden');
+  }
+
+  function filterSuppliers() {
+    const input = document.getElementById("supplierSearch");
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById("suppliersTable");
+    const rows = table.getElementsByTagName("tr");
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const text = row.textContent || row.innerText;
+      if (text.toLowerCase().indexOf(filter) > -1) {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+      }
+    }
+  }
+</script>
+{% endblock %}

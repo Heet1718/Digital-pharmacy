@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Returns Management - MediStore Pro{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-end">
+        <div>
+            <h1 class="page-title">Returns Management</h1>
+            <p class="page-subtitle">Track refunds and manage returned stock inventory.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="stat-card border-l-4 border-primary">
+            <div class="stat-label">Monthly Returns</div>
+            <div class="stat-value text-primary">₹{{ "%.2f"|format(stats.monthly_returns or 0) }}</div>
+            <div class="stat-change text-gray-500">Current Month Total</div>
+        </div>
+        <div class="stat-card border-l-4 border-danger">
+            <div class="stat-label">Yearly Returns</div>
+            <div class="stat-value text-danger">₹{{ "%.2f"|format(stats.yearly_returns or 0) }}</div>
+            <div class="stat-change text-gray-500">FY 2026-27</div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
+            <h2 class="section-header flex items-center gap-2">
+                <i class="fas fa-undo-alt text-primary"></i> Process New Return
+            </h2>
+        </div>
+        <div class="card-body p-6">
+            <form action="{{ url_for('process_return') }}" method="POST" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <div class="md:col-span-3">
+                        <label class="form-label">Bill Number</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="bill_no" class="form-input" placeholder="INV-XXXXXXXX" required>
+                            <button type="button" class="btn-secondary" onclick="fetchBill()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-4">
+                        <label class="form-label">Select Medicine</label>
+                        <select id="medicine_select" name="product_id" class="form-input" onchange="updatePrice()" required>
+                            <option value="">Search bill first...</option>
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="form-label">Unit Price</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-gray-400 text-sm">₹</span>
+                            <input type="number" id="unit_price" name="unit_price" class="form-input pl-7 bg-gray-50" readonly>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-3">
+                        <label class="form-label">Return Quantity</label>
+                        <input type="number" id="qty" name="quantity" class="form-input" min="1" placeholder="Enter qty" required>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-4 p-4 bg-blue-50/50 rounded-lg border border-blue-100">
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center">
+                            <input id="addInventory" name="add_to_inventory" type="checkbox" checked
+                                class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                        </div>
+                        <label for="addInventory" class="text-sm font-medium text-gray-700 cursor-pointer">
+                            Restore to Inventory <span class="text-gray-500 font-normal ml-1">(Increases stock quantity)</span>
+                        </label>
+                    </div>
+                    
+                    <input type="hidden" id="hidden_bill_id" name="bill_id">
+                    
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-check-circle"></i> Complete Return
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="section-header">Recent Returns History</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Bill No.</th>
+                        <th>Medicine</th>
+                        <th>Qty</th>
+                        <th>Refund Amount</th>
+                        <th>Inv Status</th>
+                        <th>Processed By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for return in recent_returns %}
+                    <tr>
+                        <td class="text-small">{{ return.return_date.strftime('%d %b, %I:%M %p') }}</td>
+                        <td class="font-medium">{{ return.bill_number }}</td>
+                        <td>{{ return.medicine_name }}</td>
+                        <td>{{ return.quantity }}</td>
+                        <td class="font-semibold text-danger">₹{{ "%.2f"|format(return.refund_amount) }}</td>
+                        <td>
+                            {% if return.added_to_inventory %}
+                            <span class="badge badge-success">Restored</span>
+                            {% else %}
+                            <span class="badge badge-warning">Discarded</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-gray-500">{{ return.username or 'Staff' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-8 text-gray-400 italic">No return records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function fetchBill() {
+    const billNo = document.getElementById('bill_no').value.trim();
+    if (!billNo) return;
+    
+    fetch(`/api/get_bill_items/${billNo}`)
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById('medicine_select');
+            select.innerHTML = '<option value="">-- Choose Medicine --</option>';
+            if (data.length === 0) {
+                select.innerHTML = '<option value="">No items found for this bill</option>';
+                return;
+            }
+            data.forEach(item => {
+                select.innerHTML += `<option value="${item.product_id}" data-price="${item.price}" data-billid="${item.bill_id}" data-max="${item.quantity}">${item.medicine_name} (Purchased: ${item.quantity})</option>`;
+            });
+        })
+        .catch(err => alert("Error finding bill. Check the bill number."));
+}
+
+function updatePrice() {
+    const selected = document.getElementById('medicine_select').selectedOptions[0];
+    if (selected && selected.value) {
+        document.getElementById('unit_price').value = selected.dataset.price;
+        document.getElementById('qty').max = selected.dataset.max;
+        document.getElementById('qty').value = selected.dataset.max; // Default to full return
+        document.getElementById('hidden_bill_id').value = selected.dataset.billid;
+    }
+}
+</script>
+{% endblock %}
