@@ -175,13 +175,3 @@ python app.py
 [![GitHub](https://img.shields.io/badge/GitHub-Heet1718-black?style=for-the-badge\&logo=github)](https://github.com/Heet1718)
 
 </div>
-
----
-
-<div align="center">
-
-### ⭐ Star this repository if you found it useful!
-
-<img src="https://readme-typing-svg.demolab.com?font=Poppins&size=18&pause=1000&color=00C853&center=true&width=500&lines=Thank+You+for+Visiting!;Happy+Coding!+🚀" />
-
-</div>
