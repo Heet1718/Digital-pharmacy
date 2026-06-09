@@ -1,0 +1,174 @@
+/* =========================
+   EQUIPMENT SECTION
+========================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body{
+    background:#f5f7f9;
+}
+
+.container{
+    width:90%;
+    margin:auto;
+}
+
+.equipment-section{
+    padding:70px 0;
+}
+
+.section-title{
+    text-align:center;
+    margin-bottom:50px;
+}
+
+.section-title h2{
+    font-size:38px;
+    color:#1f2937;
+    margin-bottom:10px;
+}
+
+.section-title p{
+    color:#6b7280;
+    font-size:16px;
+}
+
+.equipment-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:25px;
+}
+
+.equipment-card{
+    background:#fff;
+    border-radius:18px;
+    padding:20px;
+    position:relative;
+    transition:0.3s ease;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+.equipment-card:hover{
+    transform:translateY(-8px);
+}
+
+.discount{
+    position:absolute;
+    top:15px;
+    left:15px;
+    background:#ff3b3b;
+    color:#fff;
+    font-size:13px;
+    padding:5px 10px;
+    border-radius:6px;
+    font-weight:600;
+}
+
+.wishlist{
+    position:absolute;
+    top:15px;
+    right:15px;
+    width:35px;
+    height:35px;
+    border-radius:50%;
+    background:#f3f4f6;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+}
+
+.equipment-card img{
+    width:100%;
+    height:220px;
+    object-fit:contain;
+    margin-top:20px;
+}
+
+.equipment-content{
+    margin-top:15px;
+}
+
+.brand{
+    color:#16a34a;
+    font-size:14px;
+    font-weight:500;
+}
+
+.equipment-content h3{
+    font-size:20px;
+    margin:10px 0;
+    color:#111827;
+    line-height:1.4;
+}
+
+.price-box{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+}
+
+.new-price{
+    font-size:24px;
+    font-weight:700;
+    color:#16a34a;
+}
+
+.old-price{
+    color:#9ca3af;
+    text-decoration:line-through;
+}
+
+.equipment-content button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:#16a34a;
+    color:#fff;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.equipment-content button:hover{
+    background:#15803d;
+}
+
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+
+@media(max-width:1200px){
+    .equipment-grid{
+        grid-template-columns:repeat(3,1fr);
+    }
+}
+
+@media(max-width:900px){
+    .equipment-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+@media(max-width:600px){
+
+    .section-title h2{
+        font-size:28px;
+    }
+
+    .equipment-grid{
+        grid-template-columns:1fr;
+    }
+
+    .equipment-card img{
+        height:180px;
+    }
+}

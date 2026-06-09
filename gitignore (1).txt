@@ -1,0 +1,45 @@
+# Ignore Python virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Ignore session files
+flask_session/
+*.session
+
+# Ignore logs
+*.log
+
+# Ignore environment variables
+.env
+.env.local
+
+# Ignore database backups
+*.sql.backup
+*.db
+
+# Ignore uploaded files
+uploads/
+temp/
+
+database/
