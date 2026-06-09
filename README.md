@@ -1,106 +1,80 @@
-# <div align="center">💊 Digital Pharmacy Management System</div>
+# 💊 Digital Pharmacy Management System
 
 <div align="center">
 
-<img src="https://readme-typing-svg.demolab.com?font=Poppins&weight=700&size=28&pause=1000&color=00C853&center=true&vCenter=true&width=850&lines=Welcome+to+Digital+Pharmacy+🚀;Smart+Billing+%26+Inventory+Management;Built+with+Flask+%7C+MySQL+%7C+Python;Manage+Your+Medical+Store+Efficiently" />
-
-<br>
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:00C853,100:00BCD4&height=180&section=header&text=Digital%20Pharmacy&fontSize=45&fontColor=ffffff&animation=fadeIn" />
+<img src="https://readme-typing-svg.demolab.com?font=Poppins&size=24&pause=1000&color=00C853&center=true&vCenter=true&width=700&lines=Digital+Pharmacy+Management+System;Smart+Billing+%26+Inventory+Management;Built+with+Flask+%26+MySQL;Designed+for+Modern+Medical+Stores" />
 
 <br>
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge\&logo=python)
 ![Flask](https://img.shields.io/badge/Flask-Web_App-black?style=for-the-badge\&logo=flask)
 ![MySQL](https://img.shields.io/badge/MySQL-Database-orange?style=for-the-badge\&logo=mysql)
-![GitHub stars](https://img.shields.io/github/stars/Heet1718/Digital-pharmacy?style=for-the-badge)
-![GitHub forks](https://img.shields.io/github/forks/Heet1718/Digital-pharmacy?style=for-the-badge)
-
-<br>
-
-![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=Heet1718\&theme=github_dark)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 </div>
 
 ---
 
-## 🚀 About The Project
+## 📌 About The Project
 
-💊 **Digital Pharmacy Management System** is a modern pharmacy automation platform developed to simplify daily medical store operations.
+The **Digital Pharmacy Management System** is a complete solution for managing pharmacy operations efficiently. It helps medical store owners handle inventory, billing, customer records, supplier management, expiry tracking, and business analytics through a user-friendly dashboard.
 
-It enables pharmacy owners to manage:
-
-* 🛒 Billing & Invoicing
-* 📦 Inventory Tracking
-* ⏳ Expiry Monitoring
-* 🚚 Supplier Management
-* 👥 Customer Records
-* 📊 Sales Analytics
-* 📄 PDF Reports
-* 💳 UPI Payments
+The system is designed to reduce manual work, improve stock management, and generate detailed reports for better decision-making.
 
 ---
 
 ## ✨ Features
 
-<table>
-<tr>
-<td width="50%">
+### 🛒 Billing & Sales
 
-### 🛒 Billing System
+* Fast invoice generation
+* GST calculation
+* Customer billing history
+* Cash & UPI payments
+* Printable invoices
 
-* GST Calculation
-* Invoice Generation
-* Customer Billing
-* UPI Payments
+### 📦 Inventory Management
 
-</td>
+* Medicine stock tracking
+* Batch-wise inventory control
+* Low stock alerts
+* Product management
+* CSV product import
 
-<td width="50%">
+### ⏳ Expiry Monitoring
 
-### 📦 Inventory
+* Expiry alerts
+* Expired medicine tracking
+* Batch management system
 
-* Stock Tracking
-* Batch Management
-* Low Stock Alerts
-* CSV Import
+### 📊 Analytics Dashboard
 
-</td>
-</tr>
+* Revenue monitoring
+* Daily & monthly sales reports
+* Profit analysis
+* Inventory valuation
+* Business performance insights
 
-<tr>
-<td>
+### 🚚 Supplier Management
 
-### ⏳ Expiry Alerts
-
-* Expired Products
-* Expiry Monitoring
-* Batch-wise Tracking
-
-</td>
-
-<td>
-
-### 📊 Analytics
-
-* Revenue Reports
-* Profit Analysis
-* Sales Dashboard
-* Inventory Valuation
-
-</td>
-</tr>
-</table>
+* Supplier records
+* Purchase order tracking
+* Delivery monitoring
+* Supplier performance analysis
 
 ---
 
-## ⚙️ Tech Stack
+## 🛠️ Tech Stack
 
-<p align="center">
-
-<img src="https://skillicons.dev/icons?i=python,flask,mysql,html,css,js,github,vscode" />
-
-</p>
+| Technology | Purpose       |
+| ---------- | ------------- |
+| Python     | Backend       |
+| Flask      | Web Framework |
+| MySQL      | Database      |
+| HTML5      | Structure     |
+| CSS3       | Styling       |
+| JavaScript | Interactivity |
+| ReportLab  | PDF Reports   |
 
 ---
 
@@ -115,13 +89,13 @@ Digital-pharmacy/
 │
 ├── templates/
 ├── static/
-├── database/
-└── uploads/
+├── uploads/
+└── database/
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Installation
 
 ### Clone Repository
 
@@ -136,7 +110,15 @@ cd Digital-pharmacy
 pip install -r requirements.txt
 ```
 
-### Run Application
+### Configure Database
+
+Update your MySQL credentials in:
+
+```python
+config.py
+```
+
+### Run Project
 
 ```bash
 python app.py
@@ -144,58 +126,41 @@ python app.py
 
 ---
 
-## 📈 Project Stats
+## 🎯 Key Highlights
 
-<div align="center">
+✅ Smart Billing System
 
-<img height="170" src="https://github-readme-stats.vercel.app/api?username=Heet1718&show_icons=true&theme=tokyonight"/>
+✅ Inventory Tracking
 
-<img height="170" src="https://github-readme-streak-stats.herokuapp.com/?user=Heet1718&theme=tokyonight"/>
+✅ Expiry Alerts
 
-</div>
+✅ Customer Management
 
----
+✅ Supplier Management
 
-## 🌟 Highlights
+✅ Sales Analytics
 
-```diff
-+ Smart Billing System
-+ Inventory Management
-+ Supplier Management
-+ Expiry Alerts
-+ Analytics Dashboard
-+ PDF Report Generation
-+ Customer Management
-+ UPI Payment Integration
-```
+✅ PDF Report Generation
+
+✅ UPI Payment Support
+
+✅ Secure Authentication
 
 ---
 
-## 📸 Preview
+## 📸 Screenshots
 
-<div align="center">
-
-✨ Add screenshots of:
-
-📊 Dashboard
-
-🛒 Billing Page
-
-📦 Inventory Module
-
-📈 Reports Section
-
-</div>
+> Add your dashboard, billing, inventory, and analytics screenshots here.
 
 ---
 
-## 🔮 Future Enhancements
+## 🌟 Future Improvements
 
-* 📱 Mobile Application
-* 🤖 AI-based Demand Prediction
-* 📷 Barcode Scanner
-* ☁️ Cloud Deployment
-* 📧 Email Notifications
+* Barcode Scanner Integration
+* AI-based Demand Prediction
+* Mobile Application
+* Cloud Deployment
+* SMS & Email Notifications
 
 ---
 
@@ -203,13 +168,11 @@ python app.py
 
 <div align="center">
 
-<img src="https://readme-typing-svg.demolab.com?font=Poppins&size=22&pause=1000&color=36BCF7&center=true&width=500&lines=Heet+Patel;AI%2FML+Enthusiast;Full+Stack+Developer" />
+### Heet Patel
 
-### 🌐 Connect With Me
+💡 AI/ML Enthusiast | Full Stack Developer
 
-<a href="https://github.com/Heet1718">
-<img src="https://img.shields.io/badge/GitHub-Heet1718-181717?style=for-the-badge&logo=github"/>
-</a>
+[![GitHub](https://img.shields.io/badge/GitHub-Heet1718-black?style=for-the-badge\&logo=github)](https://github.com/Heet1718)
 
 </div>
 
@@ -217,10 +180,8 @@ python app.py
 
 <div align="center">
 
-## ⭐ If you like this project, give it a star!
+### ⭐ Star this repository if you found it useful!
 
-<img src="https://readme-typing-svg.demolab.com?font=Poppins&size=20&pause=1000&color=FFD700&center=true&width=600&lines=Thank+You+for+Visiting!;Happy+Coding!+🚀;Star+the+Repository+⭐" />
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:00BCD4,100:00C853&height=120&section=footer"/>
+<img src="https://readme-typing-svg.demolab.com?font=Poppins&size=18&pause=1000&color=00C853&center=true&width=500&lines=Thank+You+for+Visiting!;Happy+Coding!+🚀" />
 
 </div>
